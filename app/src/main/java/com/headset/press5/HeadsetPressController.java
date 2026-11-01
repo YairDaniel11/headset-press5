@@ -90,10 +90,10 @@ public final class HeadsetPressController {
     public static boolean onKeyEvent(Context c, KeyEvent ev) {
         if (!armed || ev == null) return false;
         int code = ev.getKeyCode();
-        boolean tapKey = code == KeyEvent.KEYCODE_HEADSETHOOK
-                || code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
-                || code == KeyEvent.KEYCODE_MEDIA_PLAY
-                || code == KeyEvent.KEYCODE_MEDIA_PAUSE;
+        // נגיעה בודדת באוזנייה: הפעלה/השהיה. נגיעה כפולה שולחת בדרך כלל "הבא"
+        // (נספרת כ-2), ושלוש נגיעות "הקודם" (נספרת כ-3) - זה מה שנראה ביומן.
+        int weight = weightOf(code);
+        boolean tapKey = weight > 0;
 
         // הסרת כפילויות: אותו אירוע שהגיע משני המסלולים.
         if (ev.getEventTime() == lastEventTime && ev.getAction() == lastEventAction) return tapKey;
@@ -104,26 +104,43 @@ public final class HeadsetPressController {
                 + (ev.getAction() == KeyEvent.ACTION_DOWN ? " DOWN" : " UP"));
         if (!tapKey) return false;
 
-        if (ev.getAction() == KeyEvent.ACTION_DOWN && ev.getRepeatCount() == 0) registerTap();
+        if (ev.getAction() == KeyEvent.ACTION_DOWN && ev.getRepeatCount() == 0) registerTap(weight);
         return true;
     }
 
     /** נגיעה שזוהתה ישירות מהקלט הגולמי (רוט) - נקרא מ-thread אחר. */
-    public static void onRawTap() {
+    public static void onRawTap(final int weight) {
         HANDLER.post(new Runnable() {
             @Override
             public void run() {
-                if (armed) registerTap();
+                if (armed) registerTap(weight);
             }
         });
     }
 
+    /** כמה נגיעות מייצג מקש מדיה: 0 = לא מקש נגיעה. */
+    static int weightOf(int keyCode) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_HEADSETHOOK:
+            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+            case KeyEvent.KEYCODE_MEDIA_PLAY:
+            case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                return 1;
+            case KeyEvent.KEYCODE_MEDIA_NEXT:
+                return 2;
+            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                return 3;
+            default:
+                return 0;
+        }
+    }
+
     /** נגיעה אחת; הסרת כפילויות בין מסלול המערכת למסלול הקלט הגולמי. */
-    private static void registerTap() {
+    private static void registerTap(int weight) {
         long now = android.os.SystemClock.uptimeMillis();
         if (now - lastTapTime < DEDUPE_MS) return;
         lastTapTime = now;
-        tapCount++;
+        tapCount += weight;
         HANDLER.removeCallbacks(FIRE);
         HANDLER.postDelayed(FIRE, TAP_WINDOW_MS);
     }

@@ -67,7 +67,7 @@ final class RootScreenTapper {
     }
 
     /** הפעילות שעל המסך עכשיו, בצורת pkg/cls, או null אם לא זוהתה. */
-    private static String resumedComponent() {
+    static String resumedComponent() {
         String out = RootShell.execOutput("dumpsys activity activities | grep -E "
                 + "'mResumedActivity|mFocusedActivity|topResumedActivity'", TAP_TIMEOUT_MS);
         if (out == null) return null;

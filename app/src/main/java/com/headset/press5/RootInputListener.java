@@ -95,7 +95,8 @@ final class RootInputListener {
         String dev = parts[0].endsWith(":") ? parts[0].substring(0, parts[0].length() - 1) : parts[0];
         if (isNavigationNoise(key)) return;
         DiagnosticsLog.add(app, "קלט גולמי: " + key + " (" + dev + ")");
-        if (isTapKey(key)) HeadsetPressController.onRawTap();
+        int w = tapWeight(key);
+        if (w > 0) HeadsetPressController.onRawTap(w);
     }
 
     /** מקשי הטלפון עצמו (ניווט) - רעש שמסתיר את אירועי האוזנייה ביומן. */
@@ -105,8 +106,12 @@ final class RootInputListener {
                 || key.equals("KEY_MENU") || key.equals("KEY_POWER") || key.equals("KEY_KBDILLUMTOGGLE");
     }
 
-    private static boolean isTapKey(String key) {
-        return key.equals("KEY_PLAYPAUSE") || key.equals("KEY_PLAYCD") || key.equals("KEY_PAUSECD")
-                || key.equals("KEY_MEDIA") || key.equals("KEY_PLAY") || key.equals("KEY_PAUSE");
+    /** כמו HeadsetPressController.weightOf, לפי שמות getevent. */
+    private static int tapWeight(String key) {
+        if (key.equals("KEY_PLAYPAUSE") || key.equals("KEY_PLAYCD") || key.equals("KEY_PAUSECD")
+                || key.equals("KEY_MEDIA") || key.equals("KEY_PLAY") || key.equals("KEY_PAUSE")) return 1;
+        if (key.equals("KEY_NEXTSONG")) return 2;
+        if (key.equals("KEY_PREVIOUSSONG")) return 3;
+        return 0;
     }
 }

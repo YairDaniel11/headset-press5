@@ -32,9 +32,20 @@ final class Key5Sender {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                // קודם הקשה על כפתור 5 במסך (עובד גם כשהמחייגן מתעלם ממקש פיזי).
-                if (RootScreenTapper.pressFive(c)) return;
-                DiagnosticsLog.add(c, "רוט: נופל חזרה למקש פיזי");
+                boolean experimental = AppPrefs.getBringFront(c);
+                if (experimental) {
+                    // ניסיוני: הקשה על כפתור 5 במסך (uiautomator) - איטית ולא תמיד עובדת.
+                    if (RootScreenTapper.pressFive(c)) return;
+                    DiagnosticsLog.add(c, "רוט: נופל חזרה למקש פיזי");
+                } else {
+                    // מקש פיזי נשלח לחלון שעל המסך - לכן מוודאים שזה מסך השיחה,
+                    // אחרת 5 היה מוקלד לתוך אפליקציה אחרת.
+                    String top = RootScreenTapper.resumedComponent();
+                    if (top != null && !top.toLowerCase().contains("incall")) {
+                        DiagnosticsLog.add(c, "רוט: על המסך אין מסך שיחה (" + top + ") - לא מקיש 5");
+                        return;
+                    }
+                }
                 RootShell.Result r = RootShell.exec("input keyevent " + KEYCODE_5, ROOT_TIMEOUT_MS);
                 DiagnosticsLog.add(c, r.success ? "רוט: נשלח KEYCODE_5"
                         : (r.timedOut ? "רוט: su לא הגיב בזמן" : "רוט: הפקודה נכשלה"));
