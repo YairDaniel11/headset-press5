@@ -118,6 +118,7 @@ public class MainActivity extends Activity {
                 DiagnosticsLog.add(app, "אבחון אוזנייה: 30 שניות - גע באוזנייה עכשיו");
                 HeadsetPressController.arm(app);
                 logConnectionState(app);
+                clearSystemLog();
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -127,6 +128,7 @@ public class MainActivity extends Activity {
                         if (tm == null || tm.getCallState() == android.telephony.TelephonyManager.CALL_STATE_IDLE) {
                             HeadsetPressController.disarm(app);
                         }
+                        dumpBluetoothSystemLog(app);
                         DiagnosticsLog.add(app, "אבחון אוזנייה: הסתיים");
                     }
                 }, 30000L);
@@ -195,22 +197,90 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * אבחון חיבור האוזנייה: אילו התקני קלט קיימים (אמור להופיע התקן בלוטוס/AVRCP
-     * כשהאוזנייה מחוברת לשמע מדיה) ומה מצב שמע הבלוטוס. דורש רוט.
+     * אבחון חיבור האוזנייה. קודם מה שהמערכת עצמה מדווחת (בלי רוט): האם בלוטוס פעיל,
+     * האם פרופיל המדיה/השיחה (A2DP/HEADSET) מחובר, ולאן מנותב השמע. אחר כך (רוט):
+     * התקני הקלט שקיימים.
      */
     private void logConnectionState(final Context app) {
+        try {
+            android.bluetooth.BluetoothAdapter ad = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
+            StringBuilder sb = new StringBuilder("בלוטוס: ");
+            if (ad == null) {
+                sb.append("אין מתאם");
+            } else {
+                sb.append(ad.isEnabled() ? "פעיל" : "כבוי");
+                sb.append(", מדיה=").append(profileName(ad.getProfileConnectionState(
+                        android.bluetooth.BluetoothProfile.A2DP)));
+                sb.append(", שיחה=").append(profileName(ad.getProfileConnectionState(
+                        android.bluetooth.BluetoothProfile.HEADSET)));
+                sb.append(", מותאמים:");
+                for (android.bluetooth.BluetoothDevice d : ad.getBondedDevices()) {
+                    sb.append(' ').append(d.getName());
+                }
+            }
+            DiagnosticsLog.add(app, sb.toString());
+        } catch (Exception e) {
+            DiagnosticsLog.add(app, "בלוטוס: שגיאה בקריאת המצב (" + e.getClass().getSimpleName() + ")");
+        }
+        android.media.AudioManager am = (android.media.AudioManager) app.getSystemService(Context.AUDIO_SERVICE);
+        if (am != null) {
+            DiagnosticsLog.add(app, "ניתוב שמע: מדיה-בלוטוס=" + am.isBluetoothA2dpOn()
+                    + ", שיחה-בלוטוס(SCO)=" + am.isBluetoothScoOn()
+                    + ", אוזניות חוטיות=" + am.isWiredHeadsetOn());
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
                 String nl = String.valueOf((char) 10);
                 String devs = RootShell.execOutput("getevent -p | grep -E 'name:'", 8000L);
                 DiagnosticsLog.add(app, "התקני קלט: " + (devs == null ? "לא זמין" : devs.trim().replace(nl, " | ")));
-                String audio = RootShell.execOutput(
-                        "dumpsys audio | grep -i -E 'a2dp|sco|bluetooth' | head -n 6", 8000L);
-                DiagnosticsLog.add(app, "שמע בלוטוס: " + (audio == null ? "לא זמין"
-                        : audio.trim().replace(nl, " | ")));
             }
         }, "press5-conn").start();
+    }
+
+    private static String profileName(int state) {
+        switch (state) {
+            case 2: return "מחובר";
+            case 1: return "מתחבר";
+            case 3: return "מתנתק";
+            default: return "לא מחובר";
+        }
+    }
+
+    /** מנקה את יומן המערכת כדי שבסוף האבחון יישארו רק האירועים מהחלון הזה. */
+    private void clearSystemLog() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                RootShell.exec("logcat -c", 5000L);
+            }
+        }, "press5-logcat-clear").start();
+    }
+
+    /**
+     * אוסף מיומן המערכת את מה שהבלוטוס/הלחצנים דיווחו בזמן האבחון (פקודות HFP
+     * כמו AT+CKPD, AVRCP, לחצני מדיה) - כך רואים מה האוזנייה שלחה בפועל.
+     */
+    private void dumpBluetoothSystemLog(final Context app) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String out = RootShell.execOutput("logcat -d -v time | grep -i -E "
+                        + "'ckpd|avrcp|bvra|btif_hf|btif_rc|headsetstatemachine|bluetoothheadset|"
+                        + "mediabutton|media_button|AT[+]|vgs|vgm'", 10000L);
+                if (out == null || out.trim().length() == 0) {
+                    DiagnosticsLog.add(app, "יומן מערכת: אין אירועי בלוטוס/לחצנים בחלון האבחון");
+                    return;
+                }
+                String[] lines = out.trim().split(String.valueOf((char) 10));
+                int from = Math.max(0, lines.length - 25);
+                DiagnosticsLog.add(app, "יומן מערכת: " + (lines.length - from) + " שורות אחרונות מתוך " + lines.length);
+                for (int i = from; i < lines.length; i++) {
+                    String l = lines[i].trim();
+                    DiagnosticsLog.add(app, "sys: " + (l.length() > 110 ? l.substring(0, 110) : l));
+                }
+            }
+        }, "press5-logcat-dump").start();
     }
 
     @Override
