@@ -214,8 +214,7 @@ public class MainActivity extends Activity {
         btnToggle.setBackgroundResource(on ? R.drawable.btn_on : R.drawable.btn_primary);
         StringBuilder sb = new StringBuilder();
         try {
-            sb.append("גרסה ").append(getPackageManager().getPackageInfo(getPackageName(), 0).versionName).append('
-');
+            sb.append("גרסה ").append(getPackageManager().getPackageInfo(getPackageName(), 0).versionName).append('\n');
         } catch (Exception ignored) {
         }
         sb.append(getString(on ? R.string.status_service_on : R.string.status_service_off)).append('\n');
