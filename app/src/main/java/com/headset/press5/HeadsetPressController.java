@@ -31,6 +31,7 @@ public final class HeadsetPressController {
     private static final int SRC_NONE = -1;
     private static final int SRC_SYSTEM = 0;
     private static final int SRC_RAW = 1;
+    private static final int SRC_VOLUME = 2;
 
     private static final Handler HANDLER = new Handler(Looper.getMainLooper());
 
@@ -102,16 +103,21 @@ public final class HeadsetPressController {
         seriesSource = SRC_NONE;
         reassertRuns = 0;
         DiagnosticsLog.add(appContext, "שיחה החלה - תופס את לחצן האוזנייה");
-        if (!AppPrefs.METHOD_ACCESSIBILITY.equals(AppPrefs.getMethod(appContext))) {
-            RootInputListener.start(appContext);
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            MediaSessionHelper.start(appContext);
+        if (AppPrefs.TRIGGER_VOLUME.equals(AppPrefs.getTrigger(appContext))) {
+            // מחוות ווליום: מגיעה לטלפון גם בשיחה (בניגוד לנגיעה רגילה).
+            VolumeGestureWatcher.start(appContext);
         } else {
-            registerLegacy(appContext);
-            DiagnosticsLog.add(appContext, "נרשם מקלט לחצן מדיה (מסלול 4.4)");
+            if (!AppPrefs.METHOD_ACCESSIBILITY.equals(AppPrefs.getMethod(appContext))) {
+                RootInputListener.start(appContext);
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                MediaSessionHelper.start(appContext);
+            } else {
+                registerLegacy(appContext);
+                DiagnosticsLog.add(appContext, "נרשם מקלט לחצן מדיה (מסלול 4.4)");
+            }
+            HANDLER.postDelayed(REASSERT, 300L);
         }
-        HANDLER.postDelayed(REASSERT, 300L);
         HANDLER.postDelayed(LOG_ROUTING, 1500L);
         HANDLER.postDelayed(LOG_ROUTING, 6000L);
     }
@@ -126,6 +132,7 @@ public final class HeadsetPressController {
         tapCount = 0;
         seriesSource = SRC_NONE;
         DiagnosticsLog.add(appContext, "שיחה הסתיימה - משחרר את לחצן האוזנייה");
+        VolumeGestureWatcher.stop(appContext);
         RootInputListener.stop();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSessionHelper.stop();
@@ -147,7 +154,7 @@ public final class HeadsetPressController {
         int code = ev.getKeyCode();
         // נגיעה בודדת באוזנייה: הפעלה/השהיה. נגיעה כפולה שולחת בדרך כלל "הבא"
         // (נספרת כ-2), ושלוש נגיעות "הקודם" (נספרת כ-3) - זה מה שנראה ביומן.
-        int weight = weightOf(code);
+        int weight = AppPrefs.TRIGGER_TAP.equals(AppPrefs.getTrigger(c)) ? weightOf(code) : 0;
         boolean tapKey = weight > 0;
 
         // אותו אירוע שהגיע משני ערוצי המערכת (MediaSession וגם מקלט).
@@ -163,6 +170,11 @@ public final class HeadsetPressController {
             registerTap(weight, SRC_SYSTEM);
         }
         return true;
+    }
+
+    /** מחוות ווליום מהאוזנייה (VolumeGestureWatcher) - רצה על ה-thread הראשי. */
+    public static void onVolumeGesture() {
+        if (armed) registerTap(1, SRC_VOLUME);
     }
 
     /** נגיעה שזוהתה ישירות מהקלט הגולמי (רוט) - נקרא מ-thread אחר. */

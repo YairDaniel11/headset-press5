@@ -12,6 +12,11 @@ public final class AppPrefs {
     private static final String KEY_TAPS = "taps";
     private static final String KEY_METHOD = "method";
     private static final String KEY_HIDE_NOTIF = "hide_notif";
+    private static final String KEY_TRIGGER = "trigger";
+
+    /** נגיעה באוזנייה (לא מגיעה לטלפון בשיחה כשהקול באוזנייה) / מחוות ווליום (מגיעה). */
+    public static final String TRIGGER_TAP = "tap";
+    public static final String TRIGGER_VOLUME = "volume";
 
     public static final String METHOD_AUTO = "auto";
     public static final String METHOD_ROOT = "root";
@@ -53,5 +58,13 @@ public final class AppPrefs {
 
     public static void setHideNotification(Context c, boolean v) {
         prefs(c).edit().putBoolean(KEY_HIDE_NOTIF, v).apply();
+    }
+
+    public static String getTrigger(Context c) {
+        return prefs(c).getString(KEY_TRIGGER, TRIGGER_VOLUME);
+    }
+
+    public static void setTrigger(Context c, String t) {
+        prefs(c).edit().putString(KEY_TRIGGER, t).apply();
     }
 }

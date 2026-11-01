@@ -64,6 +64,15 @@ public class MainActivity extends Activity {
             }
         });
 
+        final RadioGroup rgTrigger = (RadioGroup) findViewById(R.id.rgTrigger);
+        rgTrigger.check(AppPrefs.TRIGGER_TAP.equals(AppPrefs.getTrigger(this)) ? R.id.rbTrigTap : R.id.rbTrigVolume);
+        rgTrigger.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int id) {
+                AppPrefs.setTrigger(MainActivity.this, id == R.id.rbTrigTap ? AppPrefs.TRIGGER_TAP : AppPrefs.TRIGGER_VOLUME);
+            }
+        });
+
         final android.widget.CheckBox cbHide = (android.widget.CheckBox) findViewById(R.id.cbHideNotif);
         cbHide.setChecked(AppPrefs.getHideNotification(this));
         cbHide.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
@@ -174,6 +183,7 @@ public class MainActivity extends Activity {
         int[] order = {
                 R.id.btnToggle,
                 R.id.rbTapsOne, R.id.rbTapsTwo,
+                R.id.rbTrigVolume, R.id.rbTrigTap,
                 R.id.rbAuto, R.id.rbRoot, R.id.rbAccessibility,
                 R.id.btnAccessibility, R.id.btnRequestRoot,
                 R.id.cbHideNotif,

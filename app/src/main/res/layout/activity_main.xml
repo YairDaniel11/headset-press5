@@ -85,6 +85,27 @@
                         style="@style/OptionRow"
                         android:text="@string/taps_two" />
                 </RadioGroup>
+
+                <TextView
+                    style="@style/SectionTitle"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/trigger_title" />
+
+                <RadioGroup
+                    android:id="@+id/rgTrigger"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/rbTrigVolume"
+                        style="@style/OptionRow"
+                        android:text="@string/trigger_volume" />
+
+                    <RadioButton
+                        android:id="@+id/rbTrigTap"
+                        style="@style/OptionRow"
+                        android:text="@string/trigger_tap" />
+                </RadioGroup>
             </LinearLayout>
 
             <!-- כרטיס: שיטת ההקשה -->

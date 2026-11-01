@@ -10,6 +10,9 @@
     <string name="taps_title">מה מקיש 5 בשיחה</string>
     <string name="taps_one">נגיעה אחת באוזנייה</string>
     <string name="taps_two">נגיעה כפולה באוזנייה</string>
+    <string name="trigger_title">איך מפעילים באוזנייה</string>
+    <string name="trigger_volume">מחוות ווליום (נגיעה למעלה/למטה) - עובד בשיחה</string>
+    <string name="trigger_tap">נגיעה רגילה - לא עובד כשהקול של השיחה באוזנייה</string>
     <string name="method_title">שיטת ההקשה</string>
     <string name="method_auto">אוטומטי (נגישות, ואם אין - רוט)</string>
     <string name="method_root">רוט בלבד</string>
