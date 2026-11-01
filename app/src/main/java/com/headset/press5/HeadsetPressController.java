@@ -55,6 +55,20 @@ public final class HeadsetPressController {
         }
     };
 
+    /** רושם ביומן לאן מנותב קול השיחה - קובע אם האוזנייה במצב שיחה (HFP) ולכן לא שולחת נגיעות. */
+    private static final Runnable LOG_ROUTING = new Runnable() {
+        @Override
+        public void run() {
+            if (!armed || appContext == null) return;
+            AudioManager am = (AudioManager) appContext.getSystemService(Context.AUDIO_SERVICE);
+            if (am == null) return;
+            DiagnosticsLog.add(appContext, "ניתוב שיחה: מצב=" + am.getMode()
+                    + " (2=שיחה), SCO-בלוטוס=" + am.isBluetoothScoOn()
+                    + ", מדיה-בלוטוס=" + am.isBluetoothA2dpOn()
+                    + ", רמקול=" + am.isSpeakerphoneOn());
+        }
+    };
+
     private static boolean armed;
     private static int tapCount;
     private static int seriesSource = SRC_NONE;
@@ -98,6 +112,8 @@ public final class HeadsetPressController {
             DiagnosticsLog.add(appContext, "נרשם מקלט לחצן מדיה (מסלול 4.4)");
         }
         HANDLER.postDelayed(REASSERT, 300L);
+        HANDLER.postDelayed(LOG_ROUTING, 1500L);
+        HANDLER.postDelayed(LOG_ROUTING, 6000L);
     }
 
     /** נקרא כשהשיחה נגמרת - משחרר את הלחצן בחזרה למערכת. */
@@ -106,6 +122,7 @@ public final class HeadsetPressController {
         armed = false;
         HANDLER.removeCallbacks(FIRE);
         HANDLER.removeCallbacks(REASSERT);
+        HANDLER.removeCallbacks(LOG_ROUTING);
         tapCount = 0;
         seriesSource = SRC_NONE;
         DiagnosticsLog.add(appContext, "שיחה הסתיימה - משחרר את לחצן האוזנייה");
