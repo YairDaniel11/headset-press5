@@ -14,7 +14,6 @@
     <string name="method_auto">אוטומטי (נגישות, ואם אין - רוט)</string>
     <string name="method_root">רוט בלבד</string>
     <string name="method_accessibility">נגישות בלבד</string>
-    <string name="bring_front">ניסיוני: הקשה לפי מסך (איטית) והבאת מסך שיחה לחזית - עלול להקריס מחייגן</string>
     <string name="options_title">אפשרויות</string>
     <string name="hide_notification">הסתר את ההתראה מסרגל המצב (ככל שהמערכת מאפשרת)</string>
     <string name="btn_accessibility">הגדרות נגישות</string>

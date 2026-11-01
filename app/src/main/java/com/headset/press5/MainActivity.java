@@ -64,15 +64,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        final android.widget.CheckBox cbFront = (android.widget.CheckBox) findViewById(R.id.cbBringFront);
-        cbFront.setChecked(AppPrefs.getBringFront(this));
-        cbFront.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
-                AppPrefs.setBringFront(MainActivity.this, checked);
-            }
-        });
-
         final android.widget.CheckBox cbHide = (android.widget.CheckBox) findViewById(R.id.cbHideNotif);
         cbHide.setChecked(AppPrefs.getHideNotification(this));
         cbHide.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
@@ -182,7 +173,7 @@ public class MainActivity extends Activity {
                 R.id.rbTapsOne, R.id.rbTapsTwo,
                 R.id.rbAuto, R.id.rbRoot, R.id.rbAccessibility,
                 R.id.btnAccessibility, R.id.btnRequestRoot,
-                R.id.cbHideNotif, R.id.cbBringFront,
+                R.id.cbHideNotif,
                 R.id.btnTestSend, R.id.btnDiagHeadset,
                 R.id.btnRefreshLog
         };

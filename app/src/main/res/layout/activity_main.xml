@@ -150,10 +150,6 @@
                     style="@style/OptionRow"
                     android:text="@string/hide_notification" />
 
-                <CheckBox
-                    android:id="@+id/cbBringFront"
-                    style="@style/OptionRow"
-                    android:text="@string/bring_front" />
             </LinearLayout>
 
             <!-- כרטיס: אבחון ויומן -->
