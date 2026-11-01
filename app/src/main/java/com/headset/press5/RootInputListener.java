@@ -12,51 +12,77 @@ import java.io.InputStreamReader;
  *    (למשל התקן AVRCP של בלוטוס) שלא מגיעים כלל כאירוע מדיה לאפליקציה.
  * 2. נגיעות: מקשי מדיה/אוזנייה נספרים כנגיעה באותו מנגנון כמו המסלול הרגיל.
  *
+ * כל הפעולות כאן לא חוסמות את ה-thread הקורא (start/stop נקראים מה-thread
+ * הראשי): ההאזנה וגם סגירת התהליך רצות ב-threads נפרדים.
+ *
  * פורמט שורה של "getevent -l":  /dev/input/event5: EV_KEY  KEY_PLAYPAUSE  DOWN
  */
 final class RootInputListener {
     private RootInputListener() {}
 
+    private static final Object LOCK = new Object();
     private static Process process;
     private static Thread thread;
 
-    static synchronized void start(final Context c) {
-        if (thread != null) return;
+    static void start(final Context c) {
         final Context app = c.getApplicationContext();
-        thread = new Thread(new Runnable() {
+        final Thread t;
+        synchronized (LOCK) {
+            if (thread != null) return;
+            t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    listen(app);
+                }
+            }, "press5-getevent");
+            thread = t;
+        }
+        t.start();
+    }
+
+    /** סוגר את התהליך ב-thread נפרד - destroy() עלול לחסום. */
+    static void stop() {
+        final Process p;
+        synchronized (LOCK) {
+            p = process;
+        }
+        if (p == null) return;
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    Process p = Runtime.getRuntime().exec("su");
-                    synchronized (RootInputListener.class) {
-                        process = p;
-                    }
-                    DataOutputStream os = new DataOutputStream(p.getOutputStream());
-                    os.writeBytes("getevent -l\n");
-                    os.flush();
-                    BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream(), "UTF-8"));
-                    String line;
-                    while ((line = r.readLine()) != null) handleLine(app, line);
-                } catch (Exception e) {
-                    DiagnosticsLog.add(app, "קלט גולמי: נעצר (" + e.getClass().getSimpleName() + ")");
-                } finally {
-                    synchronized (RootInputListener.class) {
-                        process = null;
-                        thread = null;
-                    }
+                    p.destroy();
+                } catch (Exception ignored) {
                 }
             }
-        }, "press5-getevent");
-        thread.start();
+        }, "press5-getevent-stop").start();
     }
 
-    static synchronized void stop() {
-        if (process != null) process.destroy();
+    private static void listen(Context app) {
+        try {
+            Process p = Runtime.getRuntime().exec("su");
+            synchronized (LOCK) {
+                process = p;
+            }
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+            os.writeBytes("getevent -l\n");
+            os.flush();
+            BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream(), "UTF-8"));
+            String line;
+            while ((line = r.readLine()) != null) handleLine(app, line);
+        } catch (Exception e) {
+            DiagnosticsLog.add(app, "קלט גולמי: נעצר (" + e.getClass().getSimpleName() + ")");
+        } finally {
+            synchronized (LOCK) {
+                process = null;
+                thread = null;
+            }
+        }
     }
 
     private static void handleLine(Context app, String line) {
         if (!line.contains("EV_KEY") || !line.contains("DOWN")) return;
-        String[] parts = line.trim().split("\\s+");
+        String[] parts = line.trim().split("\s+");
         // [device:, EV_KEY, KEY_NAME, DOWN]
         String key = null;
         for (String p : parts) {
