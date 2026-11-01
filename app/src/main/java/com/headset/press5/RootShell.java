@@ -65,10 +65,8 @@ public final class RootShell {
         try {
             process = Runtime.getRuntime().exec("su");
             DataOutputStream os = new DataOutputStream(process.getOutputStream());
-            os.writeBytes(shellCommand + "
-");
-            os.writeBytes("exit
-");
+            os.writeBytes(shellCommand + "\n");
+            os.writeBytes("exit\n");
             os.flush();
 
             final java.io.InputStream in = process.getInputStream();
