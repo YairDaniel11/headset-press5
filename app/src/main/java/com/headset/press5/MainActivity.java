@@ -117,6 +117,7 @@ public class MainActivity extends Activity {
                 final Context app = getApplicationContext();
                 DiagnosticsLog.add(app, "אבחון אוזנייה: 30 שניות - גע באוזנייה עכשיו");
                 HeadsetPressController.arm(app);
+                logConnectionState(app);
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -191,6 +192,25 @@ public class MainActivity extends Activity {
         }
         View refresh = findViewById(R.id.btnRefreshLog);
         if (refresh != null) refresh.setNextFocusRightId(R.id.btnClearLog);
+    }
+
+    /**
+     * אבחון חיבור האוזנייה: אילו התקני קלט קיימים (אמור להופיע התקן בלוטוס/AVRCP
+     * כשהאוזנייה מחוברת לשמע מדיה) ומה מצב שמע הבלוטוס. דורש רוט.
+     */
+    private void logConnectionState(final Context app) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String nl = String.valueOf((char) 10);
+                String devs = RootShell.execOutput("getevent -p | grep -E 'name:'", 8000L);
+                DiagnosticsLog.add(app, "התקני קלט: " + (devs == null ? "לא זמין" : devs.trim().replace(nl, " | ")));
+                String audio = RootShell.execOutput(
+                        "dumpsys audio | grep -i -E 'a2dp|sco|bluetooth' | head -n 6", 8000L);
+                DiagnosticsLog.add(app, "שמע בלוטוס: " + (audio == null ? "לא זמין"
+                        : audio.trim().replace(nl, " | ")));
+            }
+        }, "press5-conn").start();
     }
 
     @Override
