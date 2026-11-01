@@ -15,7 +15,7 @@
     <string name="method_root">רוט בלבד</string>
     <string name="method_accessibility">נגישות בלבד</string>
     <string name="btn_accessibility">הגדרות נגישות</string>
-    <string name="btn_test_send">בדיקה: הקש 5 עכשיו (בתוך שיחה)</string>
+    <string name="btn_test_send">בדיקה: הקש 5 בעוד 5 שניות (עבור למסך השיחה)</string>
     <string name="btn_refresh_log">רענן יומן</string>
     <string name="btn_clear_log">נקה יומן</string>
     <string name="log_title">יומן אבחון</string>

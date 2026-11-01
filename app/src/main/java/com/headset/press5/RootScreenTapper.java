@@ -26,6 +26,68 @@ final class RootScreenTapper {
 
     /** true אם נמצא ולחצנו על מקש 5. */
     static boolean pressFive(Context c) {
+        appCtx = c.getApplicationContext();
+        String top = resumedComponent();
+        boolean broughtCall = false;
+        if (top == null || !top.toLowerCase().contains("incall")) {
+            // על המסך אפליקציה אחרת: מביאים את מסך השיחה לחזית, מקישים, ומחזירים.
+            String call = findCallComponent();
+            if (call != null) {
+                RootShell.exec("am start -n '" + call + "' -f " + FRONT_FLAGS, TAP_TIMEOUT_MS);
+                DiagnosticsLog.add(c, "מסך: מביא את מסך השיחה לחזית (" + call + ")");
+                sleep(FRONT_DELAY_MS);
+                broughtCall = true;
+            } else {
+                DiagnosticsLog.add(c, "מסך: מסך השיחה לא נמצא, מנסה על המסך הנוכחי (" + top + ")");
+            }
+        }
+        try {
+            return doPress(c);
+        } finally {
+            if (broughtCall && top != null) {
+                sleep(300L);
+                RootShell.exec("am start -n '" + top + "' -f " + FRONT_FLAGS, TAP_TIMEOUT_MS);
+                DiagnosticsLog.add(c, "מסך: מחזיר את האפליקציה הקודמת (" + top + ")");
+            }
+        }
+    }
+
+    // NEW_TASK | REORDER_TO_FRONT - מעלה פעילות קיימת לחזית בלי ליצור חדשה.
+    private static final String FRONT_FLAGS = "0x10020000";
+    private static final long FRONT_DELAY_MS = 900L;
+    private static final Pattern COMPONENT = Pattern.compile(
+            "([A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+)/(\\.?[A-Za-z0-9_.$]+)");
+
+    private static void sleep(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /** הפעילות שעל המסך עכשיו, בצורת pkg/cls, או null אם לא זוהתה. */
+    private static String resumedComponent() {
+        String out = RootShell.execOutput("dumpsys activity activities | grep -E "
+                + "'mResumedActivity|mFocusedActivity|topResumedActivity'", TAP_TIMEOUT_MS);
+        if (out == null) return null;
+        Matcher m = COMPONENT.matcher(out);
+        return m.find() ? m.group(1) + "/" + m.group(2) : null;
+    }
+
+    /** מסך השיחה (פעילות שהשם שלה כולל InCall) מתוך הפעילויות הקיימות. */
+    private static String findCallComponent() {
+        String out = RootShell.execOutput("dumpsys activity activities | grep -i incall", TAP_TIMEOUT_MS);
+        if (out == null) return null;
+        Matcher m = COMPONENT.matcher(out);
+        while (m.find()) {
+            String comp = m.group(1) + "/" + m.group(2);
+            if (comp.toLowerCase().contains("incall")) return comp;
+        }
+        return null;
+    }
+
+    private static boolean doPress(Context c) {
         String xml = dump();
         if (xml == null) {
             DiagnosticsLog.add(c, "מסך: צילום עץ המסך נכשל (uiautomator/su)");
@@ -56,11 +118,24 @@ final class RootScreenTapper {
         return tap(c, five, "נלחץ מקש 5 (אחרי פתיחת מקלדת)");
     }
 
+    /** עד שני ניסיונות; אם נכשל - מחזיר null ושגיאת uiautomator נרשמת ביומן. */
     private static String dump() {
-        String out = RootShell.execOutput("rm -f " + DUMP_FILE + "; uiautomator dump " + DUMP_FILE
-                + " >/dev/null 2>&1; cat " + DUMP_FILE, DUMP_TIMEOUT_MS);
-        return out != null && out.contains("<node ") ? out : null;
+        String lastOut = null;
+        for (int attempt = 0; attempt < 2; attempt++) {
+            String out = RootShell.execOutput("rm -f " + DUMP_FILE + "; uiautomator dump " + DUMP_FILE
+                    + " 2>&1; cat " + DUMP_FILE + " 2>&1", DUMP_TIMEOUT_MS);
+            if (out != null && out.contains("<node ")) return out;
+            lastOut = out;
+        }
+        if (appCtx != null) {
+            String head = lastOut == null ? "ללא פלט (נתקע?)" : lastOut.trim();
+            if (head.length() > 120) head = head.substring(0, 120);
+            DiagnosticsLog.add(appCtx, "מסך: שגיאת uiautomator: " + head);
+        }
+        return null;
     }
+
+    private static Context appCtx;
 
     private static boolean tap(Context c, Point p, String okMsg) {
         RootShell.Result r = RootShell.exec("input tap " + p.x + " " + p.y, TAP_TIMEOUT_MS);

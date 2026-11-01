@@ -19,3 +19,6 @@ android-sdk/
 # חתימות/keystore - אם בעתיד תוסיפו חתימת release, לעולם לא להעלות את הקובץ עצמו
 *.jks
 *.keystore
+
+# מפתח debug קבוע (בכוונה כן במאגר, כמו ב-ZIM) כדי שעדכונים יותקנו מעל הקודמת
+!app/debug.keystore

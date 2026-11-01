@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.view.View;
@@ -78,8 +80,16 @@ public class MainActivity extends Activity {
         findViewById(R.id.btnTestSend).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                DiagnosticsLog.add(MainActivity.this, "בדיקה ידנית: הקשת 5");
-                Key5Sender.send(MainActivity.this);
+                // ההקשה נעשית על מה שמוצג במסך באותו רגע - לכן מחכים 5 שניות,
+                // כדי שאפשר יהיה לעבור למסך השיחה (ולא לבדוק את מסך האפליקציה עצמה).
+                DiagnosticsLog.add(MainActivity.this, "בדיקה ידנית: הקשת 5 בעוד 5 שניות - עבור למסך השיחה");
+                final Context appCtx = getApplicationContext();
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Key5Sender.send(appCtx);
+                    }
+                }, 5000L);
                 refresh();
             }
         });
