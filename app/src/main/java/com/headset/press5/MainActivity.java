@@ -61,6 +61,15 @@ public class MainActivity extends Activity {
             }
         });
 
+        final android.widget.CheckBox cbFront = (android.widget.CheckBox) findViewById(R.id.cbBringFront);
+        cbFront.setChecked(AppPrefs.getBringFront(this));
+        cbFront.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
+                AppPrefs.setBringFront(MainActivity.this, checked);
+            }
+        });
+
         btnToggle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

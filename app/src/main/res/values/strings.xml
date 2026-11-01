@@ -14,6 +14,7 @@
     <string name="method_auto">אוטומטי (נגישות, ואם אין - רוט)</string>
     <string name="method_root">רוט בלבד</string>
     <string name="method_accessibility">נגישות בלבד</string>
+    <string name="bring_front">ניסיוני: להביא מסך שיחה לחזית לפני ההקשה (עלול להקריס מחייגן)</string>
     <string name="btn_accessibility">הגדרות נגישות</string>
     <string name="btn_test_send">בדיקה: הקש 5 בעוד 5 שניות (עבור למסך השיחה)</string>
     <string name="btn_refresh_log">רענן יומן</string>

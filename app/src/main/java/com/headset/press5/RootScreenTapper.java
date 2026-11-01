@@ -29,7 +29,7 @@ final class RootScreenTapper {
         appCtx = c.getApplicationContext();
         String top = resumedComponent();
         boolean broughtCall = false;
-        if (top == null || !top.toLowerCase().contains("incall")) {
+        if (AppPrefs.getBringFront(c) && (top == null || !top.toLowerCase().contains("incall"))) {
             // על המסך אפליקציה אחרת: מביאים את מסך השיחה לחזית, מקישים, ומחזירים.
             String call = findCallComponent();
             if (call != null) {

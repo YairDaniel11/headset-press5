@@ -11,6 +11,7 @@ public final class AppPrefs {
     private static final String KEY_ENABLED = "enabled";
     private static final String KEY_TAPS = "taps";
     private static final String KEY_METHOD = "method";
+    private static final String KEY_BRING_FRONT = "bring_front";
 
     public static final String METHOD_AUTO = "auto";
     public static final String METHOD_ROOT = "root";
@@ -43,5 +44,14 @@ public final class AppPrefs {
 
     public static void setMethod(Context c, String m) {
         prefs(c).edit().putString(KEY_METHOD, m).apply();
+    }
+
+    /** ניסיוני: להביא את מסך השיחה לחזית לפני ההקשה (עלול להקריס מחייגן). */
+    public static boolean getBringFront(Context c) {
+        return prefs(c).getBoolean(KEY_BRING_FRONT, false);
+    }
+
+    public static void setBringFront(Context c, boolean v) {
+        prefs(c).edit().putBoolean(KEY_BRING_FRONT, v).apply();
     }
 }

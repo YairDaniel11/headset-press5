@@ -28,6 +28,9 @@ public final class HeadsetPressController {
 
     private static final Handler HANDLER = new Handler(Looper.getMainLooper());
 
+    private static final long DEDUPE_MS = 120L;
+    private static long lastTapTime;
+
     private static boolean armed;
     private static int tapCount;
     private static long lastEventTime = -1;
@@ -57,6 +60,9 @@ public final class HeadsetPressController {
         armed = true;
         tapCount = 0;
         DiagnosticsLog.add(appContext, "שיחה החלה - תופס את לחצן האוזנייה");
+        if (!AppPrefs.METHOD_ACCESSIBILITY.equals(AppPrefs.getMethod(appContext))) {
+            RootInputListener.start(appContext);
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSessionHelper.start(appContext);
         } else {
@@ -72,6 +78,7 @@ public final class HeadsetPressController {
         HANDLER.removeCallbacks(FIRE);
         tapCount = 0;
         DiagnosticsLog.add(appContext, "שיחה הסתיימה - משחרר את לחצן האוזנייה");
+        RootInputListener.stop();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSessionHelper.stop();
         } else {
@@ -97,12 +104,28 @@ public final class HeadsetPressController {
                 + (ev.getAction() == KeyEvent.ACTION_DOWN ? " DOWN" : " UP"));
         if (!tapKey) return false;
 
-        if (ev.getAction() == KeyEvent.ACTION_DOWN && ev.getRepeatCount() == 0) {
-            tapCount++;
-            HANDLER.removeCallbacks(FIRE);
-            HANDLER.postDelayed(FIRE, TAP_WINDOW_MS);
-        }
+        if (ev.getAction() == KeyEvent.ACTION_DOWN && ev.getRepeatCount() == 0) registerTap();
         return true;
+    }
+
+    /** נגיעה שזוהתה ישירות מהקלט הגולמי (רוט) - נקרא מ-thread אחר. */
+    public static void onRawTap() {
+        HANDLER.post(new Runnable() {
+            @Override
+            public void run() {
+                if (armed) registerTap();
+            }
+        });
+    }
+
+    /** נגיעה אחת; הסרת כפילויות בין מסלול המערכת למסלול הקלט הגולמי. */
+    private static void registerTap() {
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - lastTapTime < DEDUPE_MS) return;
+        lastTapTime = now;
+        tapCount++;
+        HANDLER.removeCallbacks(FIRE);
+        HANDLER.postDelayed(FIRE, TAP_WINDOW_MS);
     }
 
     // ---- מסלול אנדרואיד 4.4 ----
