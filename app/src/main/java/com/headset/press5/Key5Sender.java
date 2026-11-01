@@ -8,18 +8,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * מבצע את הקשת 5 בפועל. שתי שיטות:
  * - נגישות: KeypadClickService לוחץ על מקש 5 במסך השיחה (בלי רוט).
- * - רוט: מעיר את המסך, מעלה את מסך השיחה לחזית כשלוח המקשים שלו פתוח
- *   (ב-4.4 מסך השיחה מקבל מקשי ספרה רק כשלוח המקשים גלוי), שולח
- *   "input keyevent 12" (KEYCODE_5) ומחזיר את האפליקציה הקודמת.
+ * - רוט: קריאת su אחת שמבצעת את הכול:
+ *     1. "service call phone 4 i32 1" = ITelephony.showCallScreenWithDialpad(true)
+ *        (טרנזקציה 4 ב-4.4): אותה פעולה שהמערכת עצמה עושה בלחיצה על התראת
+ *        השיחה - מעלה את מסך השיחה לחזית עם לוח המקשים פתוח. ב-4.4 מסך השיחה
+ *        מקבל מקשי ספרה רק כשלוח המקשים שלו גלוי. (am start ישיר למסך השיחה
+ *        הקריס את המחייגן ב-ROM הזה, ולכן לא משתמשים בו.)
+ *     2. "input keyevent 12" = KEYCODE_5 לחלון שבפוקוס (מסך השיחה).
+ *   קריאה אחת בלבד ולא כמה: כל קריאת su מקפיצה הודעת Magisk "הוענקו הרשאות".
  * במצב אוטומטי: נגישות אם מחוברת, אחרת רוט.
  */
 final class Key5Sender {
     private Key5Sender() {}
 
     private static final int KEYCODE_5 = 12;
-    private static final long ROOT_TIMEOUT_MS = 6000L;
-    private static final long CALL_SCREEN_SETTLE_MS = 800L;
-    private static final long BEFORE_RESTORE_MS = 400L;
+    private static final long ROOT_TIMEOUT_MS = 8000L;
     private static final long SCREEN_WAKE_MS = 4000L;
 
     /** מונע שתי הקשות במקביל (הקשה חוזרת בזמן שהקודמת עדיין רצה). */
@@ -56,34 +59,17 @@ final class Key5Sender {
     }
 
     private static void sendViaRoot(Context c) {
-        String top = CallScreen.resumed();
-        // אם על המסך אפליקציה אחרת (או שלא זוהתה) - מחפשים את מסך השיחה. בלי מסך
-        // שיחה לא שולחים: מקש פיזי היה מוקלד לתוך אפליקציה אחרת.
-        String call = CallScreen.isCallScreen(top) ? top : CallScreen.findCall();
-        if (call == null) {
-            DiagnosticsLog.add(c, "רוט: מסך השיחה לא נמצא (על המסך: " + top + ") - לא מקיש 5");
+        wakeScreen(c);
+        // 2>&1: שגיאות נכנסות לפלט, כדי שאפשר יהיה לראות אותן ביומן.
+        String cmd = "service call phone 4 i32 1 2>&1; sleep 1; input keyevent " + KEYCODE_5 + " 2>&1";
+        String out = RootShell.execOutput(cmd, ROOT_TIMEOUT_MS);
+        if (out == null) {
+            DiagnosticsLog.add(c, "רוט: su לא הגיב בזמן");
             return;
         }
-
-        wakeScreen(c);
-
-        // חלון הבקשה של מנהל ה-root הוא לא אפליקציה שחוזרים אליה.
-        String restore = (top != null && !CallScreen.isCallScreen(top) && !top.toLowerCase().contains("magisk"))
-                ? top : null;
-
-        boolean shown = CallScreen.showCallWithDialpad(call);
-        DiagnosticsLog.add(c, shown ? "רוט: מסך השיחה בחזית עם לוח מקשים" : "רוט: הבאת מסך השיחה נכשלה");
-        CallScreen.sleep(CALL_SCREEN_SETTLE_MS);
-
-        RootShell.Result r = RootShell.exec("input keyevent " + KEYCODE_5, ROOT_TIMEOUT_MS);
-        DiagnosticsLog.add(c, r.success ? "רוט: נשלח KEYCODE_5"
-                : (r.timedOut ? "רוט: su לא הגיב בזמן" : "רוט: הפקודה נכשלה"));
-
-        if (restore != null) {
-            CallScreen.sleep(BEFORE_RESTORE_MS);
-            CallScreen.bringToFront(restore);
-            DiagnosticsLog.add(c, "רוט: האפליקציה הקודמת הוחזרה");
-        }
+        String shown = out.trim().replace(String.valueOf((char) 10), " | ");
+        if (shown.length() > 120) shown = shown.substring(0, 120);
+        DiagnosticsLog.add(c, "רוט: נשלח מסך שיחה + מקש 5. פלט: " + shown);
     }
 
     /** מדליק את המסך לכמה שניות - אחרת (טלפון בכיס) הקשה לא מגיעה לחלון. */
