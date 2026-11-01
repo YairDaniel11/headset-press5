@@ -9,7 +9,8 @@ import android.os.Build;
 public class BootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
+        String action = intent.getAction();
+        if (!Intent.ACTION_BOOT_COMPLETED.equals(action) && !Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) return;
         if (!AppPrefs.isEnabled(context)) return;
         Intent svc = new Intent(context, CallWatcherService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

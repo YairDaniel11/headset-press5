@@ -14,6 +14,14 @@ final class MediaSessionHelper {
 
     private static MediaSession session;
 
+    private static PlaybackState state(int s) {
+        return new PlaybackState.Builder()
+                .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
+                        | PlaybackState.ACTION_PLAY_PAUSE)
+                .setState(s, 0, 1f)
+                .build();
+    }
+
     @SuppressWarnings("deprecation")
     static void start(final Context c) {
         if (session != null) return;
@@ -24,17 +32,13 @@ final class MediaSessionHelper {
             session.setCallback(new MediaSession.Callback() {
                 @Override
                 public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
-                    HeadsetPressController.onKeyEvent(c, HeadsetPressController.extractKeyEvent(mediaButtonIntent));
-                    // נצרך תמיד, כדי שהמחייגן לא יענה/ינתק על לחצן האוזנייה בזמן שיחה.
-                    return true;
+                    // נצרך רק אם זה לחצן נגיעה, כדי שהמחייגן לא יענה/ינתק עליו בשיחה.
+                    return HeadsetPressController.onKeyEvent(c,
+                            HeadsetPressController.extractKeyEvent(mediaButtonIntent));
                 }
             });
             // סשן "מנגן" - מערכת ההפעלה שולחת את הלחצנים לסשן שהכי לאחרונה פעיל ומנגן.
-            session.setPlaybackState(new PlaybackState.Builder()
-                    .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
-                            | PlaybackState.ACTION_PLAY_PAUSE)
-                    .setState(PlaybackState.STATE_PLAYING, 0, 1f)
-                    .build());
+            session.setPlaybackState(state(PlaybackState.STATE_PLAYING));
             session.setActive(true);
             DiagnosticsLog.add(c, "סשן מדיה פעיל (מסלול 5+)");
         } catch (Exception e) {
@@ -43,15 +47,15 @@ final class MediaSessionHelper {
         }
     }
 
-    /** מחדש את מעמד הסשן כ"פעיל ומנגן", כדי לא לאבד את לחצן המדיה למחייגן. */
+    /**
+     * מחדש את מעמד הסשן. מעבר השהיה->ניגון הוא שינוי מצב אמיתי, שדוחף את הסשן
+     * לראש סדר העדיפויות (קביעה חוזרת של אותו מצב לא עושה זאת).
+     */
     static void reassert() {
         if (session == null) return;
         try {
-            session.setPlaybackState(new PlaybackState.Builder()
-                    .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
-                            | PlaybackState.ACTION_PLAY_PAUSE)
-                    .setState(PlaybackState.STATE_PLAYING, 0, 1f)
-                    .build());
+            session.setPlaybackState(state(PlaybackState.STATE_PAUSED));
+            session.setPlaybackState(state(PlaybackState.STATE_PLAYING));
             session.setActive(true);
         } catch (Exception ignored) {
         }

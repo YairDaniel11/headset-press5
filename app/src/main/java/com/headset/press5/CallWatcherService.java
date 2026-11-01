@@ -32,7 +32,6 @@ public class CallWatcherService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         createChannelIfNeeded();
         startForeground(NOTIFICATION_ID, buildNotification());
-        acquireWakeLock();
         registerCallListener();
         try {
             DiagnosticsLog.add(this, "שירות הופעל, גרסה "
@@ -54,9 +53,11 @@ public class CallWatcherService extends Service {
                         + (state == TelephonyManager.CALL_STATE_OFFHOOK ? "בשיחה"
                         : state == TelephonyManager.CALL_STATE_RINGING ? "מצלצל" : "פנוי"));
                 if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
+                    acquireWakeLock();
                     HeadsetPressController.arm(CallWatcherService.this);
                 } else if (state == TelephonyManager.CALL_STATE_IDLE) {
                     HeadsetPressController.disarm(CallWatcherService.this);
+                    releaseWakeLock();
                 }
             }
         };
@@ -77,6 +78,11 @@ public class CallWatcherService extends Service {
         }
         listener = null;
         HeadsetPressController.disarm(this);
+        releaseWakeLock();
+    }
+
+    /** WakeLock רק בזמן שיחה - מחזיק את המעבד ער כשהמסך כבוי, בלי לרוקן סוללה כל היום. */
+    private void releaseWakeLock() {
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
     }
 

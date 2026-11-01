@@ -13,10 +13,12 @@ import android.view.KeyEvent;
  * הלב של האפליקציה: בזמן שיחה ("חמוש") תופס את אירועי הלחצן של האוזנייה,
  * סופר נגיעות, וכשמספר הנגיעות שווה להגדרה - מפעיל את Key5Sender.
  *
- * שני מסלולי קליטה לאותו אירוע, כי אין מסלול אחד שעובד בכל גרסה:
- * - אנדרואיד 5+: MediaSession פעיל (MediaSessionHelper).
- * - אנדרואיד 4.4: registerMediaButtonEventReceiver + MediaButtonReceiver.
- * מנגנון הסרת כפילויות מונע ספירה כפולה אם שניהם מקבלים את אותו אירוע.
+ * שני מסלולי קליטה, כי ב-4.4 המערכת בולעת בשיחה את מקשי play/pause לפני
+ * שהם מגיעים לאפליקציות רגילות - לכן המסלול האמין בשיחה הוא הקלט הגולמי:
+ * - מערכת: MediaSession (5+) או registerMediaButtonEventReceiver (4.4).
+ * - גולמי: getevent דרך רוט (RootInputListener).
+ * נגיעה פיזית אחת מגיעה בדרך כלל משני המסלולים. כדי לא לספור אותה פעמיים,
+ * כל סדרת נגיעות ננעלת על המסלול שהתחיל אותה, והשני מתעלם עד סוף הסדרה.
  *
  * כל פעולה רצה על ה-thread הראשי.
  */
@@ -24,15 +26,21 @@ public final class HeadsetPressController {
     private HeadsetPressController() {}
 
     /** חלון הזמן בין נגיעות שנחשבות לאותה סדרה. */
-    private static final long TAP_WINDOW_MS = 400L;
+    private static final long TAP_WINDOW_MS = 650L;
+
+    private static final int SRC_NONE = -1;
+    private static final int SRC_SYSTEM = 0;
+    private static final int SRC_RAW = 1;
 
     private static final Handler HANDLER = new Handler(Looper.getMainLooper());
 
-    private static final long DEDUPE_MS = 120L;
-    private static long lastTapTime;
-
-    /** המחייגן נרשם מחדש כמקבל לחצן מדיה באמצע שיחה ודורס אותנו - לכן מרעננים. */
-    private static final long REASSERT_MS = 2500L;
+    /**
+     * המחייגן נרשם מחדש כמקבל לחצן מדיה בתחילת השיחה ודורס אותנו - לכן מרעננים
+     * בתדירות גבוהה בהתחלה, ואחר כך לאט.
+     */
+    private static final long REASSERT_FAST_MS = 700L;
+    private static final long REASSERT_SLOW_MS = 2500L;
+    private static int reassertRuns;
     private static final Runnable REASSERT = new Runnable() {
         @Override
         public void run() {
@@ -42,12 +50,14 @@ public final class HeadsetPressController {
             } else {
                 registerLegacy(appContext);
             }
-            HANDLER.postDelayed(this, REASSERT_MS);
+            reassertRuns++;
+            HANDLER.postDelayed(this, reassertRuns < 5 ? REASSERT_FAST_MS : REASSERT_SLOW_MS);
         }
     };
 
     private static boolean armed;
     private static int tapCount;
+    private static int seriesSource = SRC_NONE;
     private static long lastEventTime = -1;
     private static int lastEventAction = -1;
     private static Context appContext;
@@ -57,6 +67,7 @@ public final class HeadsetPressController {
         public void run() {
             int count = tapCount;
             tapCount = 0;
+            seriesSource = SRC_NONE;
             if (appContext == null) return;
             int target = AppPrefs.getTaps(appContext);
             if (count == target) {
@@ -74,6 +85,8 @@ public final class HeadsetPressController {
         appContext = c.getApplicationContext();
         armed = true;
         tapCount = 0;
+        seriesSource = SRC_NONE;
+        reassertRuns = 0;
         DiagnosticsLog.add(appContext, "שיחה החלה - תופס את לחצן האוזנייה");
         if (!AppPrefs.METHOD_ACCESSIBILITY.equals(AppPrefs.getMethod(appContext))) {
             RootInputListener.start(appContext);
@@ -84,7 +97,7 @@ public final class HeadsetPressController {
             registerLegacy(appContext);
             DiagnosticsLog.add(appContext, "נרשם מקלט לחצן מדיה (מסלול 4.4)");
         }
-        HANDLER.postDelayed(REASSERT, REASSERT_MS);
+        HANDLER.postDelayed(REASSERT, 300L);
     }
 
     /** נקרא כשהשיחה נגמרת - משחרר את הלחצן בחזרה למערכת. */
@@ -94,6 +107,7 @@ public final class HeadsetPressController {
         HANDLER.removeCallbacks(FIRE);
         HANDLER.removeCallbacks(REASSERT);
         tapCount = 0;
+        seriesSource = SRC_NONE;
         DiagnosticsLog.add(appContext, "שיחה הסתיימה - משחרר את לחצן האוזנייה");
         RootInputListener.stop();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -119,7 +133,7 @@ public final class HeadsetPressController {
         int weight = weightOf(code);
         boolean tapKey = weight > 0;
 
-        // הסרת כפילויות: אותו אירוע שהגיע משני המסלולים.
+        // אותו אירוע שהגיע משני ערוצי המערכת (MediaSession וגם מקלט).
         if (ev.getEventTime() == lastEventTime && ev.getAction() == lastEventAction) return tapKey;
         lastEventTime = ev.getEventTime();
         lastEventAction = ev.getAction();
@@ -128,7 +142,9 @@ public final class HeadsetPressController {
                 + (ev.getAction() == KeyEvent.ACTION_DOWN ? " DOWN" : " UP"));
         if (!tapKey) return false;
 
-        if (ev.getAction() == KeyEvent.ACTION_DOWN && ev.getRepeatCount() == 0) registerTap(weight);
+        if (ev.getAction() == KeyEvent.ACTION_DOWN && ev.getRepeatCount() == 0) {
+            registerTap(weight, SRC_SYSTEM);
+        }
         return true;
     }
 
@@ -137,7 +153,7 @@ public final class HeadsetPressController {
         HANDLER.post(new Runnable() {
             @Override
             public void run() {
-                if (armed) registerTap(weight);
+                if (armed) registerTap(weight, SRC_RAW);
             }
         });
     }
@@ -159,11 +175,10 @@ public final class HeadsetPressController {
         }
     }
 
-    /** נגיעה אחת; הסרת כפילויות בין מסלול המערכת למסלול הקלט הגולמי. */
-    private static void registerTap(int weight) {
-        long now = android.os.SystemClock.uptimeMillis();
-        if (now - lastTapTime < DEDUPE_MS) return;
-        lastTapTime = now;
+    /** מוסיף נגיעה לסדרה הנוכחית; סדרה ננעלת על המסלול הראשון שהתחיל אותה. */
+    private static void registerTap(int weight, int source) {
+        if (seriesSource != SRC_NONE && seriesSource != source) return;
+        seriesSource = source;
         tapCount += weight;
         HANDLER.removeCallbacks(FIRE);
         HANDLER.postDelayed(FIRE, TAP_WINDOW_MS);

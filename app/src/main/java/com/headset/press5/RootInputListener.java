@@ -7,46 +7,57 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 
 /**
- * מאזין לקלט הגולמי של המכשיר (getevent, דורש רוט) בזמן שיחה. שני שימושים:
- * 1. אבחון: רואים ביומן כל מקש ש-getevent מדווח עליו, כולל אירועי אוזנייה
- *    (למשל התקן AVRCP של בלוטוס) שלא מגיעים כלל כאירוע מדיה לאפליקציה.
- * 2. נגיעות: מקשי מדיה/אוזנייה נספרים כנגיעה באותו מנגנון כמו המסלול הרגיל.
+ * מאזין לקלט הגולמי של המכשיר (getevent, דורש רוט) בזמן שיחה. זה המסלול האמין
+ * לנגיעות אוזנייה בשיחה ב-4.4, כי הקרנל מדווח עליהן לפני שמדיניות המקשים
+ * והמחייגן יכולים לבלוע אותן. מקשי מדיה נספרים כנגיעה; שאר המקשים נרשמים ליומן
+ * רק לאבחון (בלי ספרות - הן יכולות להיות מידע רגיש שהמשתמש מקיש בשיחה).
  *
- * כל הפעולות כאן לא חוסמות את ה-thread הקורא (start/stop נקראים מה-thread
- * הראשי): ההאזנה וגם סגירת התהליך רצות ב-threads נפרדים.
+ * start/stop לא חוסמים את ה-thread הקורא. כל האזנה היא Session עצמאי, כך
+ * שעצירה לפני שהתהליך נוצר, או התחלה חדשה בזמן שהישנה נסגרת, לא מתנגשות.
  *
  * פורמט שורה של "getevent -l":  /dev/input/event5: EV_KEY  KEY_PLAYPAUSE  DOWN
  */
 final class RootInputListener {
     private RootInputListener() {}
 
+    private static final class Session {
+        volatile boolean stopped;
+        volatile Process process;
+    }
+
     private static final Object LOCK = new Object();
-    private static Process process;
-    private static Thread thread;
+    private static Session current;
 
     static void start(final Context c) {
         final Context app = c.getApplicationContext();
-        final Thread t;
+        final Session s;
         synchronized (LOCK) {
-            if (thread != null) return;
-            t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    listen(app);
-                }
-            }, "press5-getevent");
-            thread = t;
+            if (current != null) return;
+            s = new Session();
+            current = s;
         }
-        t.start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                listen(app, s);
+            }
+        }, "press5-getevent").start();
     }
 
-    /** סוגר את התהליך ב-thread נפרד - destroy() עלול לחסום. */
+    /** סוגר את ההאזנה; ה-destroy ב-thread נפרד כי הוא עלול לחסום. */
     static void stop() {
-        final Process p;
+        final Session s;
         synchronized (LOCK) {
-            p = process;
+            s = current;
+            current = null;
         }
-        if (p == null) return;
+        if (s == null) return;
+        s.stopped = true;
+        final Process p = s.process;
+        if (p != null) kill(p);
+    }
+
+    private static void kill(final Process p) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -58,33 +69,40 @@ final class RootInputListener {
         }, "press5-getevent-stop").start();
     }
 
-    private static void listen(Context app) {
+    private static void listen(Context app, Session s) {
         try {
             Process p = Runtime.getRuntime().exec("su");
-            synchronized (LOCK) {
-                process = p;
+            s.process = p;
+            // stop() נקרא לפני שהתהליך נוצר - סוגרים מיד.
+            if (s.stopped) {
+                kill(p);
+                return;
             }
             DataOutputStream os = new DataOutputStream(p.getOutputStream());
-            os.writeBytes("getevent -l\n");
+            // exec: ה-shell מוחלף ב-getevent עצמו, כך שסגירת התהליך סוגרת אותו.
+            os.writeBytes("exec getevent -l" + (char) 10);
             os.flush();
             DiagnosticsLog.add(app, "קלט גולמי: האזנה התחילה");
             BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream(), "UTF-8"));
             String line;
-            while ((line = r.readLine()) != null) handleLine(app, line);
+            while (!s.stopped && (line = r.readLine()) != null) handleLine(app, line);
             DiagnosticsLog.add(app, "קלט גולמי: ההאזנה הסתיימה");
         } catch (Exception e) {
-            DiagnosticsLog.add(app, "קלט גולמי: נעצר (" + e.getClass().getSimpleName() + ")");
+            if (!s.stopped) {
+                DiagnosticsLog.add(app, "קלט גולמי: נעצר (" + e.getClass().getSimpleName() + ")");
+            }
         } finally {
+            Process p = s.process;
+            if (p != null) kill(p);
             synchronized (LOCK) {
-                process = null;
-                thread = null;
+                if (current == s) current = null;
             }
         }
     }
 
     private static void handleLine(Context app, String line) {
         if (!line.contains("EV_KEY") || !line.contains("DOWN")) return;
-        String[] parts = line.trim().split("\\s+");
+        String[] parts = line.trim().split("[ \t]+");
         // [device:, EV_KEY, KEY_NAME, DOWN]
         String key = null;
         for (String p : parts) {
@@ -94,18 +112,15 @@ final class RootInputListener {
             }
         }
         if (key == null) return;
-        String dev = parts[0].endsWith(":") ? parts[0].substring(0, parts[0].length() - 1) : parts[0];
-        if (isNavigationNoise(key)) return;
-        DiagnosticsLog.add(app, "קלט גולמי: " + key + " (" + dev + ")");
         int w = tapWeight(key);
-        if (w > 0) HeadsetPressController.onRawTap(w);
-    }
-
-    /** מקשי הטלפון עצמו (ניווט) - רעש שמסתיר את אירועי האוזנייה ביומן. */
-    private static boolean isNavigationNoise(String key) {
-        return key.equals("KEY_UP") || key.equals("KEY_DOWN") || key.equals("KEY_LEFT")
-                || key.equals("KEY_RIGHT") || key.equals("KEY_ENTER") || key.equals("KEY_BACK")
-                || key.equals("KEY_MENU") || key.equals("KEY_POWER") || key.equals("KEY_KBDILLUMTOGGLE");
+        if (w > 0) {
+            String dev = parts[0].endsWith(":") ? parts[0].substring(0, parts[0].length() - 1) : parts[0];
+            DiagnosticsLog.add(app, "קלט גולמי: " + key + " (" + dev + ")");
+            HeadsetPressController.onRawTap(w);
+            return;
+        }
+        if (isNoise(key)) return;
+        DiagnosticsLog.add(app, "קלט גולמי: " + key);
     }
 
     /** כמו HeadsetPressController.weightOf, לפי שמות getevent. */
@@ -115,5 +130,14 @@ final class RootInputListener {
         if (key.equals("KEY_NEXTSONG")) return 2;
         if (key.equals("KEY_PREVIOUSSONG")) return 3;
         return 0;
+    }
+
+    /** מקשי ניווט (רעש), כפתורי מגע, וספרות/מקלדת מספרים (מידע רגיש). */
+    private static boolean isNoise(String key) {
+        if (key.startsWith("BTN_") || key.startsWith("KEY_KP") || key.startsWith("KEY_NUMERIC")) return true;
+        if (key.length() == 5 && key.charAt(4) >= '0' && key.charAt(4) <= '9') return true; // KEY_0..KEY_9
+        return key.equals("KEY_UP") || key.equals("KEY_DOWN") || key.equals("KEY_LEFT")
+                || key.equals("KEY_RIGHT") || key.equals("KEY_ENTER") || key.equals("KEY_BACK")
+                || key.equals("KEY_MENU") || key.equals("KEY_POWER") || key.equals("KEY_KBDILLUMTOGGLE");
     }
 }
