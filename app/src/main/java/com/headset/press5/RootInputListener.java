@@ -67,8 +67,16 @@ final class RootInputListener {
         }
         if (key == null) return;
         String dev = parts[0].endsWith(":") ? parts[0].substring(0, parts[0].length() - 1) : parts[0];
+        if (isNavigationNoise(key)) return;
         DiagnosticsLog.add(app, "קלט גולמי: " + key + " (" + dev + ")");
         if (isTapKey(key)) HeadsetPressController.onRawTap();
+    }
+
+    /** מקשי הטלפון עצמו (ניווט) - רעש שמסתיר את אירועי האוזנייה ביומן. */
+    private static boolean isNavigationNoise(String key) {
+        return key.equals("KEY_UP") || key.equals("KEY_DOWN") || key.equals("KEY_LEFT")
+                || key.equals("KEY_RIGHT") || key.equals("KEY_ENTER") || key.equals("KEY_BACK")
+                || key.equals("KEY_MENU") || key.equals("KEY_POWER") || key.equals("KEY_KBDILLUMTOGGLE");
     }
 
     private static boolean isTapKey(String key) {

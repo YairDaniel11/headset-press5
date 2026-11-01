@@ -102,6 +102,27 @@ public class MainActivity extends Activity {
                 refresh();
             }
         });
+        findViewById(R.id.btnDiagHeadset).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // מאזין 30 שניות כאילו יש שיחה: גע באוזנייה ובדוק מה מופיע ביומן.
+                final Context app = getApplicationContext();
+                DiagnosticsLog.add(app, "אבחון אוזנייה: 30 שניות - גע באוזנייה עכשיו");
+                HeadsetPressController.arm(app);
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        android.telephony.TelephonyManager tm = (android.telephony.TelephonyManager)
+                                app.getSystemService(Context.TELEPHONY_SERVICE);
+                        // לא משחררים אם בינתיים התחילה שיחה אמיתית.
+                        if (tm == null || tm.getCallState() == android.telephony.TelephonyManager.CALL_STATE_IDLE) {
+                            HeadsetPressController.disarm(app);
+                        }
+                        DiagnosticsLog.add(app, "אבחון אוזנייה: הסתיים");
+                    }
+                }, 30000L);
+            }
+        });
         findViewById(R.id.btnRefreshLog).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
