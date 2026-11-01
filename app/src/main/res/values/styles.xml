@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- android:Theme גולמי בלי AndroidX, כהה (כמו שאר האפליקציות). -->
+    <style name="AppTheme" parent="android:Theme">
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

@@ -1,0 +1,45 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.headset.press5'
+    // compileSdk תמיד חייב להיות >= targetSdk.
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.headset.press5"
+        // minSdk 19 = Android 4.4 KitKat - כדי לתמוך במכשירי מקשים ישנים.
+        minSdk 19
+
+        // targetSdk 34 (ולא 19 כמו minSdk) - זה מה שמונע את דיאלוג האזהרה
+        // "האפליקציה נבנתה לגרסה ישנה של אנדרואיד ועלולה שלא לעבוד כראוי"
+        // שאנדרואיד מציג אוטומטית (מגרסה 6 ואילך) לכל אפליקציה עם targetSdk
+        // מתחת ל-23, בלי קשר לגרסת אנדרואיד בפועל של המכשיר. minSdk הנמוך
+        // הוא זה ששומר על תמיכה במכשיר הישן - targetSdk גבוה לא פוגע בזה.
+        targetSdk 34
+
+        // versionCode/versionName כאן הם רק ברירת מחדל לבנייה מקומית
+        // (למשל אם פותחים את הפרויקט ב-Android Studio על המחשב). ב-CI
+        // (.github/workflows/build.yml) שניהם *תמיד* נדרסים אוטומטית
+        // לפי מספר הריצה של GitHub - אין צורך (ואין טעם) לערוך אותם כאן
+        // ידנית בשביל APK שיוצא מ-CI. זה תוקן בכוונה אחרי שגרסה ידנית
+        // שנקבעה כאן נשארה תקועה על "1.4" לאורך כמה סבבי תיקונים.
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+// בלי AndroidX/AppCompat בכוונה - Activity רגיל + theme גולמי של הפלטפורמה.
+// זה גם ממזער תלויות להורדה מ-Maven, וגם שומר על טביעת רגל RAM מינימלית -
+// חשוב במיוחד כשהאפליקציה כוללת גם BroadcastReceiver שמתעורר כל 5 דקות
+// (ראו NetworkCheckReceiver) ולא שירות שרץ ברצף.

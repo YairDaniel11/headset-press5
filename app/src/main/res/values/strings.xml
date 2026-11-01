@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">מקש 5 מהאוזנייה</string>
+    <string name="notification_title">מקש 5 מהאוזנייה פעיל</string>
+    <string name="notification_text">ממתין לשיחה</string>
+    <string name="accessibility_description">לוחץ על מקש 5 במסך השיחה כשמבצעים נגיעה באוזנייה. לא קורא ולא שומר שום תוכן.</string>
+
+    <string name="btn_start">הפעל</string>
+    <string name="btn_stop">כבה</string>
+    <string name="taps_title">מה מקיש 5 בשיחה</string>
+    <string name="taps_one">נגיעה אחת באוזנייה</string>
+    <string name="taps_two">נגיעה כפולה באוזנייה</string>
+    <string name="method_title">שיטת ההקשה</string>
+    <string name="method_auto">אוטומטי (נגישות, ואם אין - רוט)</string>
+    <string name="method_root">רוט בלבד</string>
+    <string name="method_accessibility">נגישות בלבד</string>
+    <string name="btn_accessibility">הגדרות נגישות</string>
+    <string name="btn_test_send">בדיקה: הקש 5 עכשיו (בתוך שיחה)</string>
+    <string name="btn_refresh_log">רענן יומן</string>
+    <string name="btn_clear_log">נקה יומן</string>
+    <string name="log_title">יומן אבחון</string>
+    <string name="status_service_on">שירות: פעיל</string>
+    <string name="status_service_off">שירות: כבוי</string>
+    <string name="status_accessibility_on">נגישות: מחוברת</string>
+    <string name="status_accessibility_off">נגישות: לא מופעלת</string>
+    <string name="status_phone_perm_missing">חסרה הרשאת טלפון - האפליקציה לא תזהה שיחות</string>
+</resources>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/app_name"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- הכפתור הראשי: מקבל את הפוקוס ההתחלתי. -->
+        <Button
+            android:id="@+id/btnToggle"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="8dp"
+            android:focusable="true"
+            android:nextFocusDown="@+id/rbTapsOne"
+            android:text="@string/btn_start"
+            android:textSize="20sp">
+            <requestFocus />
+        </Button>
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/taps_title"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/rgTaps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/rbTapsOne"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusUp="@id/btnToggle"
+                android:text="@string/taps_one" />
+
+            <RadioButton
+                android:id="@+id/rbTapsTwo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/taps_two" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/method_title"
+            android:textStyle="bold" />
+
+        <RadioGroup
+            android:id="@+id/rgMethod"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/rbAuto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/method_auto" />
+
+            <RadioButton
+                android:id="@+id/rbRoot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/method_root" />
+
+            <RadioButton
+                android:id="@+id/rbAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nextFocusDown="@+id/btnAccessibility"
+                android:text="@string/method_accessibility" />
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/btnAccessibility"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nextFocusUp="@id/rbAccessibility"
+            android:nextFocusDown="@+id/btnTestSend"
+            android:text="@string/btn_accessibility" />
+
+        <Button
+            android:id="@+id/btnTestSend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nextFocusUp="@id/btnAccessibility"
+            android:nextFocusDown="@+id/btnRefreshLog"
+            android:text="@string/btn_test_send" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/log_title"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnRefreshLog"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:nextFocusUp="@id/btnTestSend"
+                android:nextFocusRight="@+id/btnClearLog"
+                android:text="@string/btn_refresh_log" />
+
+            <Button
+                android:id="@+id/btnClearLog"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:nextFocusUp="@id/btnTestSend"
+                android:nextFocusLeft="@id/btnRefreshLog"
+                android:text="@string/btn_clear_log" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- מכשיר מקשים ללא מסך מגע: בלי זה אנדרואיד עלול לחסום התקנה. -->
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
+    <!-- מזהה מתי יש שיחה פעילה (PhoneStateListener). -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@android:drawable/stat_sys_headset"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- שירות קדמי תמידי: מאזין למצב שיחה, ובזמן שיחה תופס את לחצן האוזנייה. -->
+        <service
+            android:name=".CallWatcherService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="headset_button_to_dtmf" />
+        </service>
+
+        <!-- גיבוי לתפיסת לחצן האוזנייה באנדרואיד 4.4 (אין שם MediaSession).
+             עדיפות גבוהה כדי לקבל את האירוע לפני המחייגן. -->
+        <receiver
+            android:name=".MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter android:priority="2147483647">
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- שירות נגישות: לוחץ על מקש 5 במסך השיחה כשאין רוט. -->
+        <service
+            android:name=".KeypadClickService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_config" />
+        </service>
+
+    </application>
+
+</manifest>
