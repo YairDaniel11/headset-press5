@@ -82,7 +82,7 @@ final class RootInputListener {
 
     private static void handleLine(Context app, String line) {
         if (!line.contains("EV_KEY") || !line.contains("DOWN")) return;
-        String[] parts = line.trim().split("\s+");
+        String[] parts = line.trim().split("\\s+");
         // [device:, EV_KEY, KEY_NAME, DOWN]
         String key = null;
         for (String p : parts) {

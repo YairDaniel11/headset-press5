@@ -42,6 +42,8 @@ public class MainActivity extends Activity {
         rgTaps = (RadioGroup) findViewById(R.id.rgTaps);
         rgMethod = (RadioGroup) findViewById(R.id.rgMethod);
 
+        setupFocusChain();
+
         rgTaps.check(AppPrefs.getTaps(this) == 1 ? R.id.rbTapsOne : R.id.rbTapsTwo);
         String m = AppPrefs.getMethod(this);
         rgMethod.check(AppPrefs.METHOD_ROOT.equals(m) ? R.id.rbRoot
@@ -153,6 +155,35 @@ public class MainActivity extends Activity {
                 refresh();
             }
         });
+    }
+
+    /**
+     * שרשרת פוקוס מפורשת לכל הפקדים לפי סדר הופעתם במסך - בלעדיה ה-D-pad
+     * מדלג על כפתורים (במיוחד סביב ה-RadioGroup ותיבת הסימון).
+     */
+    private void setupFocusChain() {
+        int[] order = {
+                R.id.btnToggle,
+                R.id.rbTapsOne, R.id.rbTapsTwo,
+                R.id.rbAuto, R.id.rbRoot, R.id.rbAccessibility,
+                R.id.btnRequestRoot, R.id.cbBringFront,
+                R.id.btnAccessibility, R.id.btnTestSend, R.id.btnDiagHeadset,
+                R.id.btnRefreshLog
+        };
+        for (int i = 0; i < order.length; i++) {
+            View v = findViewById(order[i]);
+            if (v == null) continue;
+            if (i > 0) v.setNextFocusUpId(order[i - 1]);
+            if (i < order.length - 1) v.setNextFocusDownId(order[i + 1]);
+        }
+        // כפתור "נקה יומן" יושב לצד "רענן יומן": ימינה/שמאלה ביניהם, ולמעלה/למטה כמו חברו.
+        View clear = findViewById(R.id.btnClearLog);
+        if (clear != null) {
+            clear.setNextFocusUpId(R.id.btnDiagHeadset);
+            clear.setNextFocusLeftId(R.id.btnRefreshLog);
+        }
+        View refresh = findViewById(R.id.btnRefreshLog);
+        if (refresh != null) refresh.setNextFocusRightId(R.id.btnClearLog);
     }
 
     @Override
