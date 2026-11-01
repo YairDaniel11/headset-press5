@@ -34,6 +34,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ThemeUtil.apply(this);
         setContentView(R.layout.activity_main);
 
         btnToggle = (Button) findViewById(R.id.btnToggle);
@@ -69,6 +70,20 @@ public class MainActivity extends Activity {
             @Override
             public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
                 AppPrefs.setBringFront(MainActivity.this, checked);
+            }
+        });
+
+        final android.widget.CheckBox cbHide = (android.widget.CheckBox) findViewById(R.id.cbHideNotif);
+        cbHide.setChecked(AppPrefs.getHideNotification(this));
+        cbHide.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(android.widget.CompoundButton b, boolean checked) {
+                AppPrefs.setHideNotification(MainActivity.this, checked);
+                // ההתראה נבנית בעת הפעלת השירות - אם הוא פעיל, מפעילים אותו מחדש.
+                if (AppPrefs.isEnabled(MainActivity.this)) {
+                    stopService(new Intent(MainActivity.this, CallWatcherService.class));
+                    startWatcher();
+                }
             }
         });
 
@@ -166,8 +181,9 @@ public class MainActivity extends Activity {
                 R.id.btnToggle,
                 R.id.rbTapsOne, R.id.rbTapsTwo,
                 R.id.rbAuto, R.id.rbRoot, R.id.rbAccessibility,
-                R.id.btnRequestRoot, R.id.cbBringFront,
-                R.id.btnAccessibility, R.id.btnTestSend, R.id.btnDiagHeadset,
+                R.id.btnAccessibility, R.id.btnRequestRoot,
+                R.id.cbHideNotif, R.id.cbBringFront,
+                R.id.btnTestSend, R.id.btnDiagHeadset,
                 R.id.btnRefreshLog
         };
         for (int i = 0; i < order.length; i++) {
@@ -195,6 +211,7 @@ public class MainActivity extends Activity {
     private void refresh() {
         boolean on = AppPrefs.isEnabled(this);
         btnToggle.setText(on ? R.string.btn_stop : R.string.btn_start);
+        btnToggle.setBackgroundResource(on ? R.drawable.btn_on : R.drawable.btn_primary);
         StringBuilder sb = new StringBuilder();
         sb.append(getString(on ? R.string.status_service_on : R.string.status_service_off)).append('\n');
         sb.append(getString(KeypadClickService.isConnected()

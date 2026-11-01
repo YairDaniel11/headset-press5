@@ -20,6 +20,8 @@ import android.telephony.TelephonyManager;
 public class CallWatcherService extends Service {
 
     private static final String CHANNEL_ID = "press5_channel";
+    // ערוץ נפרד בעדיפות מינימלית (אנדרואיד 8+) - לא ניתן לשנות חשיבות של ערוץ קיים.
+    private static final String CHANNEL_ID_HIDDEN = "press5_channel_hidden";
     private static final int NOTIFICATION_ID = 1;
 
     private PowerManager.WakeLock wakeLock;
@@ -81,8 +83,10 @@ public class CallWatcherService extends Service {
 
     private void createChannelIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            boolean hide = AppPrefs.getHideNotification(this);
             NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID, getString(R.string.notification_title), NotificationManager.IMPORTANCE_LOW);
+                    hide ? CHANNEL_ID_HIDDEN : CHANNEL_ID, getString(R.string.notification_title),
+                    hide ? NotificationManager.IMPORTANCE_MIN : NotificationManager.IMPORTANCE_LOW);
             NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm != null) nm.createNotificationChannel(channel);
         }
@@ -90,9 +94,17 @@ public class CallWatcherService extends Service {
 
     @SuppressWarnings("deprecation")
     private Notification buildNotification() {
+        boolean hide = AppPrefs.getHideNotification(this);
         Notification.Builder b = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                ? new Notification.Builder(this, CHANNEL_ID)
+                ? new Notification.Builder(this, hide ? CHANNEL_ID_HIDDEN : CHANNEL_ID)
                 : new Notification.Builder(this);
+        if (hide) {
+            // עדיפות מינימלית: בלי אייקון בסרגל המצב (אנדרואיד 4.1+); בנוסף סודי במסך הנעילה.
+            b.setPriority(Notification.PRIORITY_MIN);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                b.setVisibility(Notification.VISIBILITY_SECRET);
+            }
+        }
         return b.setContentTitle(getString(R.string.notification_title))
                 .setContentText(getString(R.string.notification_text))
                 .setSmallIcon(android.R.drawable.stat_sys_headset)

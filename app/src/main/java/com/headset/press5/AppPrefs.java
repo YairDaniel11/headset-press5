@@ -12,6 +12,7 @@ public final class AppPrefs {
     private static final String KEY_TAPS = "taps";
     private static final String KEY_METHOD = "method";
     private static final String KEY_BRING_FRONT = "bring_front";
+    private static final String KEY_HIDE_NOTIF = "hide_notif";
 
     public static final String METHOD_AUTO = "auto";
     public static final String METHOD_ROOT = "root";
@@ -53,5 +54,14 @@ public final class AppPrefs {
 
     public static void setBringFront(Context c, boolean v) {
         prefs(c).edit().putBoolean(KEY_BRING_FRONT, v).apply();
+    }
+
+    /** להסתיר (ככל שהמערכת מאפשרת) את התראת "השירות פעיל" מסרגל המצב. */
+    public static boolean getHideNotification(Context c) {
+        return prefs(c).getBoolean(KEY_HIDE_NOTIF, false);
+    }
+
+    public static void setHideNotification(Context c, boolean v) {
+        prefs(c).edit().putBoolean(KEY_HIDE_NOTIF, v).apply();
     }
 }

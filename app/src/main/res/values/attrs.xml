@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="p5Bg" format="color" />
+    <attr name="p5Header" format="color" />
+    <attr name="p5Accent" format="color" />
+    <attr name="p5Text" format="color" />
+    <attr name="p5TextSecondary" format="color" />
+    <!-- רקע כרטיס: drawable (reference), כי shape מעוגל לא יכול להשתמש ב-?attr מתוך drawable -->
+    <attr name="p5Card" format="reference" />
+</resources>

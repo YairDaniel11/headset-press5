@@ -1,171 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:background="?attr/p5Bg"
+    android:orientation="vertical">
 
+    <!-- כותרת קבועה עם הסטטוס -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/p5Header"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:paddingBottom="10dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="10dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:text="@string/app_name"
+            android:textColor="@color/header_text"
             android:textSize="20sp"
             android:textStyle="bold" />
-
-        <!-- הכפתור הראשי: מקבל את הפוקוס ההתחלתי. -->
-        <Button
-            android:id="@+id/btnToggle"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_marginTop="8dp"
-            android:focusable="true"
-            android:nextFocusDown="@+id/rbTapsOne"
-            android:text="@string/btn_start"
-            android:textSize="20sp">
-            <requestFocus />
-        </Button>
 
         <TextView
             android:id="@+id/tvStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:textSize="14sp" />
+            android:layout_marginTop="2dp"
+            android:textColor="#CCFFFFFF"
+            android:textSize="12sp" />
+    </LinearLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="@string/taps_title"
-            android:textStyle="bold" />
-
-        <RadioGroup
-            android:id="@+id/rgTaps"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <RadioButton
-                android:id="@+id/rbTapsOne"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nextFocusUp="@id/btnToggle"
-                android:text="@string/taps_one" />
-
-            <RadioButton
-                android:id="@+id/rbTapsTwo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/taps_two" />
-        </RadioGroup>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="@string/method_title"
-            android:textStyle="bold" />
-
-        <RadioGroup
-            android:id="@+id/rgMethod"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <RadioButton
-                android:id="@+id/rbAuto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/method_auto" />
-
-            <RadioButton
-                android:id="@+id/rbRoot"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/method_root" />
-
-            <RadioButton
-                android:id="@+id/rbAccessibility"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nextFocusDown="@+id/btnAccessibility"
-                android:text="@string/method_accessibility" />
-        </RadioGroup>
-
-        <Button
-            android:id="@+id/btnRequestRoot"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_request_root" />
-
-        <CheckBox
-            android:id="@+id/cbBringFront"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/bring_front" />
-
-        <Button
-            android:id="@+id/btnAccessibility"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@id/rbAccessibility"
-            android:nextFocusDown="@+id/btnTestSend"
-            android:text="@string/btn_accessibility" />
-
-        <Button
-            android:id="@+id/btnTestSend"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nextFocusUp="@id/btnAccessibility"
-            android:nextFocusDown="@+id/btnRefreshLog"
-            android:text="@string/btn_test_send" />
-
-        <Button
-            android:id="@+id/btnDiagHeadset"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_diag_headset" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="@string/log_title"
-            android:textStyle="bold" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:padding="12dp">
 
+            <!-- הכפתור הראשי: מקבל את הפוקוס ההתחלתי -->
             <Button
-                android:id="@+id/btnRefreshLog"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:nextFocusUp="@id/btnTestSend"
-                android:nextFocusRight="@+id/btnClearLog"
-                android:text="@string/btn_refresh_log" />
+                android:id="@+id/btnToggle"
+                style="@style/ActionButton"
+                android:layout_height="60dp"
+                android:layout_marginTop="0dp"
+                android:text="@string/btn_start"
+                android:textSize="20sp"
+                android:textStyle="bold">
+                <requestFocus />
+            </Button>
 
-            <Button
-                android:id="@+id/btnClearLog"
-                android:layout_width="0dp"
+            <!-- כרטיס: מה מקיש 5 -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:nextFocusUp="@id/btnTestSend"
-                android:nextFocusLeft="@id/btnRefreshLog"
-                android:text="@string/btn_clear_log" />
+                android:layout_marginTop="12dp"
+                android:background="?attr/p5Card"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    style="@style/SectionTitle"
+                    android:text="@string/taps_title" />
+
+                <RadioGroup
+                    android:id="@+id/rgTaps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/rbTapsOne"
+                        style="@style/OptionRow"
+                        android:text="@string/taps_one" />
+
+                    <RadioButton
+                        android:id="@+id/rbTapsTwo"
+                        style="@style/OptionRow"
+                        android:text="@string/taps_two" />
+                </RadioGroup>
+            </LinearLayout>
+
+            <!-- כרטיס: שיטת ההקשה -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="?attr/p5Card"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    style="@style/SectionTitle"
+                    android:text="@string/method_title" />
+
+                <RadioGroup
+                    android:id="@+id/rgMethod"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/rbAuto"
+                        style="@style/OptionRow"
+                        android:text="@string/method_auto" />
+
+                    <RadioButton
+                        android:id="@+id/rbRoot"
+                        style="@style/OptionRow"
+                        android:text="@string/method_root" />
+
+                    <RadioButton
+                        android:id="@+id/rbAccessibility"
+                        style="@style/OptionRow"
+                        android:text="@string/method_accessibility" />
+                </RadioGroup>
+
+                <Button
+                    android:id="@+id/btnAccessibility"
+                    style="@style/SecondaryButton"
+                    android:text="@string/btn_accessibility" />
+
+                <Button
+                    android:id="@+id/btnRequestRoot"
+                    style="@style/SecondaryButton"
+                    android:text="@string/btn_request_root" />
+            </LinearLayout>
+
+            <!-- כרטיס: אפשרויות -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="?attr/p5Card"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    style="@style/SectionTitle"
+                    android:text="@string/options_title" />
+
+                <CheckBox
+                    android:id="@+id/cbHideNotif"
+                    style="@style/OptionRow"
+                    android:text="@string/hide_notification" />
+
+                <CheckBox
+                    android:id="@+id/cbBringFront"
+                    style="@style/OptionRow"
+                    android:text="@string/bring_front" />
+            </LinearLayout>
+
+            <!-- כרטיס: אבחון ויומן -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="?attr/p5Card"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    style="@style/SectionTitle"
+                    android:text="@string/log_title" />
+
+                <Button
+                    android:id="@+id/btnTestSend"
+                    style="@style/SecondaryButton"
+                    android:layout_marginTop="0dp"
+                    android:text="@string/btn_test_send" />
+
+                <Button
+                    android:id="@+id/btnDiagHeadset"
+                    style="@style/SecondaryButton"
+                    android:text="@string/btn_diag_headset" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnRefreshLog"
+                        style="@style/ActionButton"
+                        android:layout_width="0dp"
+                        android:layout_marginRight="4dp"
+                        android:layout_weight="1"
+                        android:text="@string/btn_refresh_log" />
+
+                    <Button
+                        android:id="@+id/btnClearLog"
+                        style="@style/SecondaryButton"
+                        android:layout_width="0dp"
+                        android:layout_marginLeft="4dp"
+                        android:layout_weight="1"
+                        android:text="@string/btn_clear_log" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="?attr/p5TextSecondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvLog"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:textSize="12sp" />
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</LinearLayout>
