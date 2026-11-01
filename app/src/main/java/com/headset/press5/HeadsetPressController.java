@@ -31,6 +31,21 @@ public final class HeadsetPressController {
     private static final long DEDUPE_MS = 120L;
     private static long lastTapTime;
 
+    /** המחייגן נרשם מחדש כמקבל לחצן מדיה באמצע שיחה ודורס אותנו - לכן מרעננים. */
+    private static final long REASSERT_MS = 2500L;
+    private static final Runnable REASSERT = new Runnable() {
+        @Override
+        public void run() {
+            if (!armed || appContext == null) return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                MediaSessionHelper.reassert();
+            } else {
+                registerLegacy(appContext);
+            }
+            HANDLER.postDelayed(this, REASSERT_MS);
+        }
+    };
+
     private static boolean armed;
     private static int tapCount;
     private static long lastEventTime = -1;
@@ -69,6 +84,7 @@ public final class HeadsetPressController {
             registerLegacy(appContext);
             DiagnosticsLog.add(appContext, "נרשם מקלט לחצן מדיה (מסלול 4.4)");
         }
+        HANDLER.postDelayed(REASSERT, REASSERT_MS);
     }
 
     /** נקרא כשהשיחה נגמרת - משחרר את הלחצן בחזרה למערכת. */
@@ -76,6 +92,7 @@ public final class HeadsetPressController {
         if (!armed) return;
         armed = false;
         HANDLER.removeCallbacks(FIRE);
+        HANDLER.removeCallbacks(REASSERT);
         tapCount = 0;
         DiagnosticsLog.add(appContext, "שיחה הסתיימה - משחרר את לחצן האוזנייה");
         RootInputListener.stop();
@@ -88,7 +105,14 @@ public final class HeadsetPressController {
 
     /** האם האירוע נצרך (אז המחייגן לא יקבל אותו - למשל לא ינתק את השיחה). */
     public static boolean onKeyEvent(Context c, KeyEvent ev) {
-        if (!armed || ev == null) return false;
+        if (ev == null) return false;
+        if (!armed) {
+            // לחצן שהגיע בלי שהשיחה זוהתה - חשוב לאבחון (מצב השיחה לא זוהה / אירוע מאוחר).
+            if (ev.getAction() == KeyEvent.ACTION_DOWN) {
+                DiagnosticsLog.add(c, "אירוע לחצן (לא בשיחה): " + KeyEvent.keyCodeToString(ev.getKeyCode()));
+            }
+            return false;
+        }
         int code = ev.getKeyCode();
         // נגיעה בודדת באוזנייה: הפעלה/השהיה. נגיעה כפולה שולחת בדרך כלל "הבא"
         // (נספרת כ-2), ושלוש נגיעות "הקודם" (נספרת כ-3) - זה מה שנראה ביומן.

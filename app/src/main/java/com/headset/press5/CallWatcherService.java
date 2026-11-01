@@ -34,6 +34,11 @@ public class CallWatcherService extends Service {
         startForeground(NOTIFICATION_ID, buildNotification());
         acquireWakeLock();
         registerCallListener();
+        try {
+            DiagnosticsLog.add(this, "שירות הופעל, גרסה "
+                    + getPackageManager().getPackageInfo(getPackageName(), 0).versionName);
+        } catch (Exception ignored) {
+        }
         return START_STICKY;
     }
 
@@ -45,6 +50,9 @@ public class CallWatcherService extends Service {
         listener = new PhoneStateListener() {
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
+                DiagnosticsLog.add(CallWatcherService.this, "מצב טלפון: "
+                        + (state == TelephonyManager.CALL_STATE_OFFHOOK ? "בשיחה"
+                        : state == TelephonyManager.CALL_STATE_RINGING ? "מצלצל" : "פנוי"));
                 if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
                     HeadsetPressController.arm(CallWatcherService.this);
                 } else if (state == TelephonyManager.CALL_STATE_IDLE) {

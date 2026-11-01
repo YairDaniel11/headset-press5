@@ -43,6 +43,20 @@ final class MediaSessionHelper {
         }
     }
 
+    /** מחדש את מעמד הסשן כ"פעיל ומנגן", כדי לא לאבד את לחצן המדיה למחייגן. */
+    static void reassert() {
+        if (session == null) return;
+        try {
+            session.setPlaybackState(new PlaybackState.Builder()
+                    .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
+                            | PlaybackState.ACTION_PLAY_PAUSE)
+                    .setState(PlaybackState.STATE_PLAYING, 0, 1f)
+                    .build());
+            session.setActive(true);
+        } catch (Exception ignored) {
+        }
+    }
+
     static void stop() {
         if (session == null) return;
         try {

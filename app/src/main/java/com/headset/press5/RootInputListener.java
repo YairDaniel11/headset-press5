@@ -67,9 +67,11 @@ final class RootInputListener {
             DataOutputStream os = new DataOutputStream(p.getOutputStream());
             os.writeBytes("getevent -l\n");
             os.flush();
+            DiagnosticsLog.add(app, "קלט גולמי: האזנה התחילה");
             BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream(), "UTF-8"));
             String line;
             while ((line = r.readLine()) != null) handleLine(app, line);
+            DiagnosticsLog.add(app, "קלט גולמי: ההאזנה הסתיימה");
         } catch (Exception e) {
             DiagnosticsLog.add(app, "קלט גולמי: נעצר (" + e.getClass().getSimpleName() + ")");
         } finally {
