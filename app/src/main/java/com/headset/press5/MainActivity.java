@@ -123,6 +123,23 @@ public class MainActivity extends Activity {
                 }, 30000L);
             }
         });
+        findViewById(R.id.btnRequestRoot).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // קריאת su בזמן שהאפליקציה על המסך - חלון ההרשאה של מנהל ה-root יקפוץ עכשיו.
+                // תקרת זמן ארוכה, כדי שיהיה זמן ללחוץ "אישור" (ולבחור "לצמיתות" אם יש).
+                final Context app = getApplicationContext();
+                DiagnosticsLog.add(app, "בקשת root: ממתין לאישור בחלון (עד 40 שניות)");
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        RootShell.Result r = RootShell.exec("id", 40000L);
+                        DiagnosticsLog.add(app, r.success ? "root: מאושר"
+                                : (r.timedOut ? "root: לא אושר בזמן" : "root: נדחה/לא זמין"));
+                    }
+                }, "press5-rootcheck").start();
+            }
+        });
         findViewById(R.id.btnRefreshLog).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

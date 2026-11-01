@@ -18,6 +18,7 @@
     <string name="btn_accessibility">הגדרות נגישות</string>
     <string name="btn_test_send">בדיקה: הקש 5 בעוד 5 שניות (עבור למסך השיחה)</string>
     <string name="btn_diag_headset">אבחון אוזנייה: האזנה 30 שניות (גם בלי שיחה)</string>
+    <string name="btn_request_root">בקש/בדוק הרשאת root (אשר "לצמיתות" בחלון)</string>
     <string name="btn_refresh_log">רענן יומן</string>
     <string name="btn_clear_log">נקה יומן</string>
     <string name="log_title">יומן אבחון</string>

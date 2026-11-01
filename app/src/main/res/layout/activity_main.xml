@@ -96,6 +96,12 @@
                 android:text="@string/method_accessibility" />
         </RadioGroup>
 
+        <Button
+            android:id="@+id/btnRequestRoot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_request_root" />
+
         <CheckBox
             android:id="@+id/cbBringFront"
             android:layout_width="match_parent"
