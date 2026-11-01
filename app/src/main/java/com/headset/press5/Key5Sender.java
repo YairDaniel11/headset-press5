@@ -32,6 +32,9 @@ final class Key5Sender {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                // קודם הקשה על כפתור 5 במסך (עובד גם כשהמחייגן מתעלם ממקש פיזי).
+                if (RootScreenTapper.pressFive(c)) return;
+                DiagnosticsLog.add(c, "רוט: נופל חזרה למקש פיזי");
                 RootShell.Result r = RootShell.exec("input keyevent " + KEYCODE_5, ROOT_TIMEOUT_MS);
                 DiagnosticsLog.add(c, r.success ? "רוט: נשלח KEYCODE_5"
                         : (r.timedOut ? "רוט: su לא הגיב בזמן" : "רוט: הפקודה נכשלה"));

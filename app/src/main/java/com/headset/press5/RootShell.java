@@ -55,6 +55,58 @@ public final class RootShell {
         }
     }
 
+    /**
+     * מריץ פקודה תחת su ומחזיר את הפלט שלה (או null אם נכשל/נתקע). הפלט נקרא
+     * ב-thread נפרד תוך כדי הריצה, כדי שפלט גדול (למשל dump של מסך) לא
+     * ימלא את הצינור ויתקע את התהליך.
+     */
+    public static String execOutput(String shellCommand, long timeoutMs) {
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(process.getOutputStream());
+            os.writeBytes(shellCommand + "
+");
+            os.writeBytes("exit
+");
+            os.flush();
+
+            final java.io.InputStream in = process.getInputStream();
+            final StringBuilder out = new StringBuilder();
+            Thread reader = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        java.io.BufferedReader r = new java.io.BufferedReader(
+                                new java.io.InputStreamReader(in, "UTF-8"));
+                        char[] buf = new char[4096];
+                        int n;
+                        while ((n = r.read(buf)) != -1) {
+                            synchronized (out) {
+                                out.append(buf, 0, n);
+                            }
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            }, "root-reader");
+            reader.start();
+
+            Result res = waitForProcess(process, timeoutMs);
+            reader.join(1000L);
+            if (res.timedOut) return null;
+            synchronized (out) {
+                return out.toString();
+            }
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+    }
+
     /** גרסה ל-"su -c &lt;command&gt;" ישיר (בלי כתיבה ל-stdin) - למשל בדיקת רוט. */
     public static Result execDirect(String[] command, long timeoutMs) {
         Process process = null;

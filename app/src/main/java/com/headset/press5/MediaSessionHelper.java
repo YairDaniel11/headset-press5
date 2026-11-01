@@ -36,6 +36,7 @@ final class MediaSessionHelper {
                     .setState(PlaybackState.STATE_PLAYING, 0, 1f)
                     .build());
             session.setActive(true);
+            DiagnosticsLog.add(c, "סשן מדיה פעיל (מסלול 5+)");
         } catch (Exception e) {
             DiagnosticsLog.add(c, "כשל ביצירת MediaSession: " + e);
             session = null;

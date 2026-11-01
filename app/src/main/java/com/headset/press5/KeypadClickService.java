@@ -21,7 +21,7 @@ public class KeypadClickService extends AccessibilityService {
     private static volatile KeypadClickService instance;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
-    private static final Pattern TOGGLE_PATTERN = Pattern.compile(
+    static final Pattern TOGGLE_PATTERN = Pattern.compile(
             "(?i).*(dial ?pad|keypad|key pad|מקלדת|לוח חיוג|מקשים).*");
     private static final long KEYPAD_OPEN_DELAY_MS = 600L;
 

@@ -61,6 +61,7 @@ public final class HeadsetPressController {
             MediaSessionHelper.start(appContext);
         } else {
             registerLegacy(appContext);
+            DiagnosticsLog.add(appContext, "נרשם מקלט לחצן מדיה (מסלול 4.4)");
         }
     }
 
