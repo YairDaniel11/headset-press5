@@ -134,6 +134,7 @@ public final class HeadsetPressController {
         DiagnosticsLog.add(appContext, "שיחה הסתיימה - משחרר את לחצן האוזנייה");
         VolumeGestureWatcher.stop(appContext);
         RootInputListener.stop();
+        Key5Sender.closeRoot();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             MediaSessionHelper.stop();
         } else {

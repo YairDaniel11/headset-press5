@@ -28,6 +28,16 @@ final class Key5Sender {
     /** מונע שתי הקשות במקביל (הקשה חוזרת בזמן שהקודמת עדיין רצה). */
     private static final AtomicBoolean BUSY = new AtomicBoolean(false);
 
+    /** נקרא בסוף השיחה: סוגר את סשן ה-su. */
+    static void closeRoot() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                RootSession.close();
+            }
+        }, "press5-root-close").start();
+    }
+
     static void send(final Context c) {
         final String method = AppPrefs.getMethod(c);
         final boolean useAccessibility = !AppPrefs.METHOD_ROOT.equals(method);
@@ -67,7 +77,9 @@ final class Key5Sender {
                 + "R=$(CLASSPATH='" + c.getPackageCodePath() + "' app_process /system/bin "
                 + "com.headset.press5.Key5Injector " + KEYCODE_5 + " 400 2>&1); echo \"inject: $R\"; "
                 + "case \"$R\" in OK*) ;; *) input keyevent " + KEYCODE_5 + " 2>&1;; esac";
-        String out = RootShell.execOutput(cmd, ROOT_TIMEOUT_MS);
+        // סשן אחד לכל השיחה (ראו RootSession) - כדי שההודעה של Magisk לא תקפוץ בכל הקשה.
+        // הפעם הראשונה כוללת את אישור ה-su, ולכן תקרת הזמן שלה ארוכה יותר.
+        String out = RootSession.run(cmd, ROOT_TIMEOUT_MS + 4000L);
         if (out == null) {
             DiagnosticsLog.add(c, "רוט: su לא הגיב בזמן");
             return;
