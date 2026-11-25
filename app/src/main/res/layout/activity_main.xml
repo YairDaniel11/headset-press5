@@ -70,21 +70,17 @@
                     style="@style/SectionTitle"
                     android:text="@string/taps_title" />
 
-                <RadioGroup
-                    android:id="@+id/rgTaps"
+                <TextView
+                    android:id="@+id/tvRulesSummary"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/p5Text"
+                    android:textSize="15sp" />
 
-                    <RadioButton
-                        android:id="@+id/rbTapsOne"
-                        style="@style/OptionRow"
-                        android:text="@string/taps_one" />
-
-                    <RadioButton
-                        android:id="@+id/rbTapsTwo"
-                        style="@style/OptionRow"
-                        android:text="@string/taps_two" />
-                </RadioGroup>
+                <Button
+                    android:id="@+id/btnSettings"
+                    style="@style/ActionButton"
+                    android:text="@string/btn_settings" />
 
                 <TextView
                     style="@style/SectionTitle"
@@ -196,6 +192,11 @@
                     android:id="@+id/btnDiagHeadset"
                     style="@style/SecondaryButton"
                     android:text="@string/btn_diag_headset" />
+
+                <Button
+                    android:id="@+id/btnExportLog"
+                    style="@style/SecondaryButton"
+                    android:text="@string/btn_export_log" />
 
                 <LinearLayout
                     android:layout_width="match_parent"

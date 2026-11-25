@@ -38,17 +38,23 @@ final class Key5Sender {
         }, "press5-root-close").start();
     }
 
+    /** בדיקה ידנית: מקש 5. */
     static void send(final Context c) {
+        send(c, KEYCODE_5);
+    }
+
+    /** מקיש את keyCode (ספרה, * או #) בשיחה. */
+    static void send(final Context c, final int keyCode) {
         final String method = AppPrefs.getMethod(c);
         final boolean useAccessibility = !AppPrefs.METHOD_ROOT.equals(method);
         final boolean useRoot = !AppPrefs.METHOD_ACCESSIBILITY.equals(method);
 
         if (useAccessibility && KeypadClickService.isConnected()) {
-            KeypadClickService.requestPressFive();
+            KeypadClickService.requestPress(keyChar(keyCode));
             return;
         }
         if (!useRoot) {
-            DiagnosticsLog.add(c, "שירות הנגישות לא מחובר - לא ניתן להקיש 5");
+            DiagnosticsLog.add(c, "שירות הנגישות לא מחובר - לא ניתן להקיש");
             return;
         }
         if (!BUSY.compareAndSet(false, true)) {
@@ -60,7 +66,7 @@ final class Key5Sender {
             @Override
             public void run() {
                 try {
-                    sendViaRoot(c);
+                    sendViaRoot(c, keyCode);
                 } finally {
                     BUSY.set(false);
                 }
@@ -68,15 +74,20 @@ final class Key5Sender {
         }, "press5-root").start();
     }
 
-    private static void sendViaRoot(Context c) {
+    /** התו של המקש, לחיפוש בשירות הנגישות. */
+    private static String keyChar(int keyCode) {
+        return AppPrefs.keyLabel(keyCode);
+    }
+
+    private static void sendViaRoot(Context c, int keyCode) {
         wakeScreen(c);
         // 2>&1: שגיאות נכנסות לפלט, כדי שאפשר יהיה לראות אותן ביומן.
         // ההזרקה: Key5Injector (app_process, IInputManager) במקום "input keyevent" - מהיר, והמקש
         // הראשון נלחץ 400 מ"ש. אם ההזרקה נכשלת (פלט שאינו OK) חוזרים ל-input keyevent.
         String cmd = "service call phone 4 i32 1 2>&1; sleep 1; "
                 + "R=$(CLASSPATH='" + c.getPackageCodePath() + "' app_process /system/bin "
-                + "com.headset.press5.Key5Injector " + KEYCODE_5 + " 400 2>&1); echo \"inject: $R\"; "
-                + "case \"$R\" in OK*) ;; *) input keyevent " + KEYCODE_5 + " 2>&1;; esac";
+                + "com.headset.press5.Key5Injector " + keyCode + " 400 2>&1); echo \"inject: $R\"; "
+                + "case \"$R\" in OK*) ;; *) input keyevent " + keyCode + " 2>&1;; esac";
         // סשן אחד לכל השיחה (ראו RootSession) - כדי שההודעה של Magisk לא תקפוץ בכל הקשה.
         // הפעם הראשונה כוללת את אישור ה-su, ולכן תקרת הזמן שלה ארוכה יותר.
         String out = RootSession.run(cmd, ROOT_TIMEOUT_MS + 4000L);
@@ -86,7 +97,7 @@ final class Key5Sender {
         }
         String shown = out.trim().replace(String.valueOf((char) 10), " | ");
         if (shown.length() > 120) shown = shown.substring(0, 120);
-        DiagnosticsLog.add(c, "רוט: נשלח מסך שיחה + מקש 5. פלט: " + shown);
+        DiagnosticsLog.add(c, "רוט: נשלח מסך שיחה + מקש " + AppPrefs.keyLabel(keyCode) + ". פלט: " + shown);
     }
 
     /** מדליק את המסך לכמה שניות - אחרת (טלפון בכיס) הקשה לא מגיעה לחלון. */

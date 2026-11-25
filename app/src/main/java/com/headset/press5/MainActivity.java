@@ -20,15 +20,17 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-/** מסך יחיד: הפעלה/כיבוי, הגדרת מספר הנגיעות, שיטת ההקשה ויומן אבחון. */
+/** מסך ראשי: הפעלה/כיבוי, סיכום הגדרות ההקשות (ומעבר למסך ההגדרות), שיטת ההקשה ויומן אבחון. */
 public class MainActivity extends Activity {
 
     private static final int REQUEST_PERMISSIONS = 100;
+    private static final int REQUEST_STORAGE = 101;
 
     private Button btnToggle;
     private TextView tvStatus;
     private TextView tvLog;
-    private RadioGroup rgTaps;
+    private TextView tvRulesSummary;
+    private boolean exportPending;
     private RadioGroup rgMethod;
 
     @Override
@@ -40,22 +42,15 @@ public class MainActivity extends Activity {
         btnToggle = (Button) findViewById(R.id.btnToggle);
         tvStatus = (TextView) findViewById(R.id.tvStatus);
         tvLog = (TextView) findViewById(R.id.tvLog);
-        rgTaps = (RadioGroup) findViewById(R.id.rgTaps);
+        tvRulesSummary = (TextView) findViewById(R.id.tvRulesSummary);
         rgMethod = (RadioGroup) findViewById(R.id.rgMethod);
 
         setupFocusChain();
 
-        rgTaps.check(AppPrefs.getTaps(this) == 1 ? R.id.rbTapsOne : R.id.rbTapsTwo);
         String m = AppPrefs.getMethod(this);
         rgMethod.check(AppPrefs.METHOD_ROOT.equals(m) ? R.id.rbRoot
                 : AppPrefs.METHOD_ACCESSIBILITY.equals(m) ? R.id.rbAccessibility : R.id.rbAuto);
 
-        rgTaps.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int id) {
-                AppPrefs.setTaps(MainActivity.this, id == R.id.rbTapsOne ? 1 : 2);
-            }
-        });
         rgMethod.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int id) {
@@ -95,6 +90,18 @@ public class MainActivity extends Activity {
                 } else {
                     startWithPermissions();
                 }
+            }
+        });
+        findViewById(R.id.btnSettings).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+            }
+        });
+        findViewById(R.id.btnExportLog).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                exportLog();
             }
         });
         findViewById(R.id.btnAccessibility).setOnClickListener(new View.OnClickListener() {
@@ -182,12 +189,13 @@ public class MainActivity extends Activity {
     private void setupFocusChain() {
         int[] order = {
                 R.id.btnToggle,
-                R.id.rbTapsOne, R.id.rbTapsTwo,
+                R.id.btnSettings,
                 R.id.rbTrigVolume, R.id.rbTrigTap,
                 R.id.rbAuto, R.id.rbRoot, R.id.rbAccessibility,
                 R.id.btnAccessibility, R.id.btnRequestRoot,
                 R.id.cbHideNotif,
                 R.id.btnTestSend, R.id.btnDiagHeadset,
+                R.id.btnExportLog,
                 R.id.btnRefreshLog
         };
         for (int i = 0; i < order.length; i++) {
@@ -199,7 +207,7 @@ public class MainActivity extends Activity {
         // כפתור "נקה יומן" יושב לצד "רענן יומן": ימינה/שמאלה ביניהם, ולמעלה/למטה כמו חברו.
         View clear = findViewById(R.id.btnClearLog);
         if (clear != null) {
-            clear.setNextFocusUpId(R.id.btnDiagHeadset);
+            clear.setNextFocusUpId(R.id.btnExportLog);
             clear.setNextFocusLeftId(R.id.btnRefreshLog);
         }
         View refresh = findViewById(R.id.btnRefreshLog);
@@ -293,6 +301,41 @@ public class MainActivity extends Activity {
         }, "press5-logcat-dump").start();
     }
 
+    /**
+     * ייצוא היומן המלא: קובץ בתיקיית ההורדות, העתקה ללוח, ואם יש אפליקציה לשיתוף - גם חלון שיתוף.
+     * באנדרואיד 6-9 צריך קודם הרשאת אחסון; באנדרואיד 10+ נכתב דרך MediaStore בלי הרשאה.
+     */
+    private void exportLog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < 29
+                && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            exportPending = true;
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_STORAGE);
+            return;
+        }
+        final String text = DiagnosticsLog.exportText(this);
+        try {
+            android.content.ClipboardManager cm = (android.content.ClipboardManager)
+                    getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm != null) cm.setPrimaryClip(android.content.ClipData.newPlainText("press5 log", text));
+        } catch (Exception ignored) {
+        }
+        String where = DiagnosticsLog.saveToDownloads(this, text);
+        android.widget.Toast.makeText(this, where != null
+                ? getString(R.string.export_done, where) : getString(R.string.export_failed),
+                android.widget.Toast.LENGTH_LONG).show();
+        try {
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType("text/plain");
+            send.putExtra(Intent.EXTRA_SUBJECT, "יומן " + getString(R.string.app_name));
+            send.putExtra(Intent.EXTRA_TEXT, text);
+            if (send.resolveActivity(getPackageManager()) != null) {
+                startActivity(Intent.createChooser(send, getString(R.string.btn_export_log)));
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -313,6 +356,7 @@ public class MainActivity extends Activity {
                 ? R.string.status_accessibility_on : R.string.status_accessibility_off));
         if (!hasPhonePermission()) sb.append('\n').append(getString(R.string.status_phone_perm_missing));
         tvStatus.setText(sb.toString());
+        tvRulesSummary.setText(AppPrefs.rulesSummary(this));
         tvLog.setText(DiagnosticsLog.readAll(this));
     }
 
@@ -342,6 +386,13 @@ public class MainActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         // התראות לא חובה להפעלה; הרשאת הטלפון חובה.
+        if (requestCode == REQUEST_STORAGE) {
+            if (exportPending) {
+                exportPending = false;
+                exportLog();
+            }
+            return;
+        }
         if (requestCode == REQUEST_PERMISSIONS && hasPhonePermission()) startWatcher();
         refresh();
     }

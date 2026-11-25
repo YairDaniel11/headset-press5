@@ -30,13 +30,13 @@ public class KeypadClickService extends AccessibilityService {
     }
 
     /** בטוח לקרוא מכל thread. */
-    public static void requestPressFive() {
+    public static void requestPress(final String key) {
         final KeypadClickService s = instance;
         if (s == null) return;
         s.handler.post(new Runnable() {
             @Override
             public void run() {
-                s.pressFive();
+                s.press(key);
             }
         });
     }
@@ -63,19 +63,19 @@ public class KeypadClickService extends AccessibilityService {
     public void onInterrupt() {
     }
 
-    private void pressFive() {
+    private void press(final String key) {
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root == null) {
             DiagnosticsLog.add(this, "נגישות: אין חלון פעיל (המסך כבוי?)");
             return;
         }
-        if (clickKey(root, "5")) {
-            DiagnosticsLog.add(this, "נגישות: נלחץ מקש 5");
+        if (clickKey(root, key)) {
+            DiagnosticsLog.add(this, "נגישות: נלחץ מקש " + key);
             return;
         }
         AccessibilityNodeInfo toggle = findToggle(root);
         if (toggle == null) {
-            DiagnosticsLog.add(this, "נגישות: לא נמצא מקש 5 ולא כפתור מקלדת");
+            DiagnosticsLog.add(this, "נגישות: לא נמצא מקש " + key + " ולא כפתור מקלדת");
             return;
         }
         DiagnosticsLog.add(this, "נגישות: פותח מקלדת");
@@ -84,9 +84,9 @@ public class KeypadClickService extends AccessibilityService {
             @Override
             public void run() {
                 AccessibilityNodeInfo root2 = getRootInActiveWindow();
-                boolean ok = root2 != null && clickKey(root2, "5");
+                boolean ok = root2 != null && clickKey(root2, key);
                 DiagnosticsLog.add(KeypadClickService.this,
-                        ok ? "נגישות: נלחץ מקש 5 (אחרי פתיחת מקלדת)" : "נגישות: מקש 5 לא נמצא גם אחרי פתיחת מקלדת");
+                        ok ? "נגישות: נלחץ מקש " + key + " (אחרי פתיחת מקלדת)" : "נגישות: מקש " + key + " לא נמצא גם אחרי פתיחת מקלדת");
             }
         }, KEYPAD_OPEN_DELAY_MS);
     }

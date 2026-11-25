@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">מקש 5 מהאוזנייה</string>
-    <string name="notification_title">מקש 5 מהאוזנייה פעיל</string>
+    <string name="app_name">הקשה באוזניה/שליטת שיחה באוזניה</string>
+    <string name="notification_title">שליטת שיחה באוזניה פעיל</string>
     <string name="notification_text">ממתין לשיחה</string>
-    <string name="accessibility_description">לוחץ על מקש 5 במסך השיחה כשמבצעים נגיעה באוזנייה. לא קורא ולא שומר שום תוכן.</string>
+    <string name="accessibility_description">לוחץ על מקש בלוח המקשים של מסך השיחה לפי ההגדרה, כשמבצעים הקשה באוזנייה. לא קורא ולא שומר שום תוכן.</string>
 
     <string name="btn_start">הפעל</string>
     <string name="btn_stop">כבה</string>
-    <string name="taps_title">מה מקיש 5 בשיחה</string>
-    <string name="taps_one">נגיעה אחת באוזנייה</string>
-    <string name="taps_two">נגיעה כפולה באוזנייה</string>
+    <string name="taps_title">הקשות ופעולות</string>
     <string name="trigger_title">איך מפעילים באוזנייה</string>
     <string name="trigger_volume">מחוות ווליום (נגיעה למעלה/למטה) - עובד בשיחה</string>
     <string name="trigger_tap">נגיעה רגילה - לא עובד כשהקול של השיחה באוזנייה</string>
@@ -31,4 +29,15 @@
     <string name="status_accessibility_on">נגישות: מחוברת</string>
     <string name="status_accessibility_off">נגישות: לא מופעלת</string>
     <string name="status_phone_perm_missing">חסרה הרשאת טלפון - האפליקציה לא תזהה שיחות</string>
+    <string name="btn_settings">הגדרת הקשות ופעולות</string>
+    <string name="btn_export_log">ייצוא יומן לוגים</string>
+    <string name="settings_title">הגדרת הקשות ופעולות</string>
+    <string name="settings_help">בחר לכל מספר הקשות איזה מקש ילחץ בשיחה. למשל: הקשה אחת = 5 (עצירה), שתיים = 6 או 8 (הבא), שלוש = 4 או 2 (הקודם). "כבוי" = לא עושה כלום.</string>
+    <string name="settings_tap_1">הקשה אחת</string>
+    <string name="settings_tap_2">שתי הקשות</string>
+    <string name="settings_tap_3">שלוש הקשות</string>
+    <string name="settings_tap_4">ארבע הקשות</string>
+    <string name="settings_reset">איפוס לברירת מחדל</string>
+    <string name="export_done">היומן נשמר: %1$s (והועתק ללוח)</string>
+    <string name="export_failed">שמירת היומן נכשלה. היומן הועתק ללוח.</string>
 </resources>

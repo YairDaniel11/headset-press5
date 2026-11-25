@@ -34,13 +34,55 @@ public final class AppPrefs {
         prefs(c).edit().putBoolean(KEY_ENABLED, v).apply();
     }
 
-    /** כמה נגיעות באוזנייה מקישות 5: 1 או 2. */
-    public static int getTaps(Context c) {
-        return prefs(c).getInt(KEY_TAPS, 2) == 1 ? 1 : 2;
+    /** כמה סוגי הקשות (1..MAX_TAPS) אפשר להגדיר. */
+    public static final int MAX_TAPS = 4;
+
+    /** המקשים שאפשר לבחור: 0 = כבוי, ואז ספרות, כוכבית וסולמית (קודי KeyEvent). */
+    public static final int[] KEY_CODES = {0, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
+
+    /** שם תצוגה של מקש (או "כבוי"). */
+    public static String keyLabel(int keyCode) {
+        if (keyCode == 0) return "כבוי";
+        if (keyCode >= 7 && keyCode <= 16) return String.valueOf(keyCode - 7);
+        if (keyCode == 17) return "*";
+        if (keyCode == 18) return "#";
+        return "?";
     }
 
-    public static void setTaps(Context c, int taps) {
-        prefs(c).edit().putInt(KEY_TAPS, taps == 1 ? 1 : 2).apply();
+    /**
+     * איזה מקש להקיש כשמזהים taps הקשות (1..MAX_TAPS). 0 = לא לעשות כלום.
+     * ברירת מחדל: הקשה אחת = 5. הגדרה ישנה "כמה נגיעות מקישות 5" (taps) נשמרת:
+     * מספר ההקשות שהיה מוגדר ימשיך להקיש 5.
+     */
+    public static int getKeyForTaps(Context c, int taps) {
+        SharedPreferences p = prefs(c);
+        String key = "rule_" + taps;
+        if (p.contains(key)) return p.getInt(key, 0);
+        int legacy = p.getInt(KEY_TAPS, 1);
+        return taps == legacy ? 12 : 0;
+    }
+
+    public static void setKeyForTaps(Context c, int taps, int keyCode) {
+        prefs(c).edit().putInt("rule_" + taps, keyCode).apply();
+    }
+
+    /** מחזיר את ההגדרות לברירת המחדל (הקשה אחת = 5). */
+    public static void resetRules(Context c) {
+        SharedPreferences.Editor e = prefs(c).edit();
+        for (int t = 1; t <= MAX_TAPS; t++) e.putInt("rule_" + t, t == 1 ? 12 : 0);
+        e.apply();
+    }
+
+    /** תיאור קצר של ההגדרות, למסך הראשי וליומן. */
+    public static String rulesSummary(Context c) {
+        StringBuilder sb = new StringBuilder();
+        for (int t = 1; t <= MAX_TAPS; t++) {
+            int k = getKeyForTaps(c, t);
+            if (k == 0) continue;
+            if (sb.length() > 0) sb.append(" | ");
+            sb.append(t).append(" = ").append(keyLabel(k));
+        }
+        return sb.length() == 0 ? "אין פעולות מוגדרות" : sb.toString();
     }
 
     public static String getMethod(Context c) {

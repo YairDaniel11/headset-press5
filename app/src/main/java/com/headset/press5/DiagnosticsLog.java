@@ -27,7 +27,7 @@ public final class DiagnosticsLog {
     private DiagnosticsLog() {}
 
     private static final String FILE = "press5_log.txt";
-    private static final int MAX_LINES = 120;
+    private static final int MAX_LINES = 600;
     private static final char NL = (char) 10;
     private static final ExecutorService WRITER = Executors.newSingleThreadExecutor();
 
@@ -63,6 +63,66 @@ public final class DiagnosticsLog {
         // החדש ביותר למעלה.
         for (int i = lines.size() - 1; i >= 0; i--) sb.append(lines.get(i)).append(NL);
         return sb.toString();
+    }
+
+    /** הטקסט המלא לייצוא: כותרת עם פרטי המכשיר וההגדרות, ואז היומן מהישן לחדש. */
+    public static synchronized String exportText(Context c) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("יומן ").append(c.getString(R.string.app_name)).append(NL);
+        try {
+            sb.append("גרסה: ").append(c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName)
+                    .append(NL);
+        } catch (Exception ignored) {
+        }
+        sb.append("מכשיר: ").append(android.os.Build.MANUFACTURER).append(' ').append(android.os.Build.MODEL)
+                .append(", אנדרואיד ").append(android.os.Build.VERSION.RELEASE)
+                .append(" (API ").append(android.os.Build.VERSION.SDK_INT).append(')').append(NL);
+        sb.append("הגדרות הקשות: ").append(AppPrefs.rulesSummary(c)).append(NL);
+        sb.append("טריגר: ").append(AppPrefs.getTrigger(c))
+                .append(", שיטת הקשה: ").append(AppPrefs.getMethod(c)).append(NL);
+        sb.append("------").append(NL);
+        for (String l : readLines(c)) sb.append(l).append(NL);
+        return sb.toString();
+    }
+
+    /**
+     * שומר את הטקסט בתיקיית ההורדות. מחזיר תיאור המיקום, או null אם נכשל.
+     * API 29+: MediaStore (בלי הרשאה). לפני כן: קובץ ישיר בתיקיית Download.
+     */
+    public static String saveToDownloads(Context c, String text) {
+        String name = "press5_log_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".txt";
+        try {
+            byte[] data = text.getBytes("UTF-8");
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, "Download");
+                android.net.Uri uri = c.getContentResolver().insert(
+                        android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                if (uri == null) return null;
+                java.io.OutputStream os = c.getContentResolver().openOutputStream(uri);
+                if (os == null) return null;
+                try {
+                    os.write(data);
+                } finally {
+                    os.close();
+                }
+                return "Download/" + name;
+            }
+            File dir = android.os.Environment.getExternalStoragePublicDirectory(
+                    android.os.Environment.DIRECTORY_DOWNLOADS);
+            if (!dir.exists() && !dir.mkdirs()) return null;
+            FileOutputStream os = new FileOutputStream(new File(dir, name));
+            try {
+                os.write(data);
+            } finally {
+                os.close();
+            }
+            return "Download/" + name;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static void clear(final Context c) {

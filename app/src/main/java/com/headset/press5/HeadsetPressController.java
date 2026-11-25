@@ -11,7 +11,7 @@ import android.view.KeyEvent;
 
 /**
  * הלב של האפליקציה: בזמן שיחה ("חמוש") תופס את אירועי הלחצן של האוזנייה,
- * סופר נגיעות, וכשמספר הנגיעות שווה להגדרה - מפעיל את Key5Sender.
+ * סופר נגיעות, וכשמספר הנגיעות שווה להגדרה - מקיש את המקש שהוגדר למספר ההקשות (Key5Sender).
  *
  * שני מסלולי קליטה, כי ב-4.4 המערכת בולעת בשיחה את מקשי play/pause לפני
  * שהם מגיעים לאפליקציות רגילות - לכן המסלול האמין בשיחה הוא הקלט הגולמי:
@@ -84,12 +84,12 @@ public final class HeadsetPressController {
             tapCount = 0;
             seriesSource = SRC_NONE;
             if (appContext == null) return;
-            int target = AppPrefs.getTaps(appContext);
-            if (count == target) {
-                DiagnosticsLog.add(appContext, "זוהו " + count + " נגיעות - מקיש 5");
-                Key5Sender.send(appContext);
+            int key = count >= 1 && count <= AppPrefs.MAX_TAPS ? AppPrefs.getKeyForTaps(appContext, count) : 0;
+            if (key != 0) {
+                DiagnosticsLog.add(appContext, "זוהו " + count + " הקשות - מקיש " + AppPrefs.keyLabel(key));
+                Key5Sender.send(appContext, key);
             } else {
-                DiagnosticsLog.add(appContext, "זוהו " + count + " נגיעות - לא תואם להגדרה (" + target + ")");
+                DiagnosticsLog.add(appContext, "זוהו " + count + " הקשות - אין פעולה מוגדרת");
             }
         }
     };
