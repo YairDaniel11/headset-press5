@@ -61,7 +61,12 @@ final class Key5Sender {
     private static void sendViaRoot(Context c) {
         wakeScreen(c);
         // 2>&1: שגיאות נכנסות לפלט, כדי שאפשר יהיה לראות אותן ביומן.
-        String cmd = "service call phone 4 i32 1 2>&1; sleep 1; input keyevent " + KEYCODE_5 + " 2>&1";
+        // ההזרקה: Key5Injector (app_process, IInputManager) במקום "input keyevent" - מהיר, והמקש
+        // הראשון נלחץ 400 מ"ש. אם ההזרקה נכשלת (פלט שאינו OK) חוזרים ל-input keyevent.
+        String cmd = "service call phone 4 i32 1 2>&1; sleep 1; "
+                + "R=$(CLASSPATH='" + c.getPackageCodePath() + "' app_process /system/bin "
+                + "com.headset.press5.Key5Injector " + KEYCODE_5 + " 400 2>&1); echo \"inject: $R\"; "
+                + "case \"$R\" in OK*) ;; *) input keyevent " + KEYCODE_5 + " 2>&1;; esac";
         String out = RootShell.execOutput(cmd, ROOT_TIMEOUT_MS);
         if (out == null) {
             DiagnosticsLog.add(c, "רוט: su לא הגיב בזמן");
