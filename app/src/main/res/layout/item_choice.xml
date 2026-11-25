@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- השורה שנבחרה (כשהרשימה סגורה): צבע לפי ערכת הנושא -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="center_vertical"
-    android:minHeight="44dp"
-    android:paddingLeft="8dp"
-    android:paddingRight="8dp"
+    android:minHeight="52dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
     android:singleLine="true"
-    android:textColor="?attr/p5Text"
-    android:textSize="16sp" />
+    android:textColor="#FF212121"
+    android:textSize="18sp" />

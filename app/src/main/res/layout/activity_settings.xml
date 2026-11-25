@@ -51,48 +51,72 @@
                 android:layout_marginTop="0dp"
                 android:text="@string/settings_tap_1" />
 
-            <Spinner
+            <Button
                 android:id="@+id/spTaps1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:focusable="true" />
+                android:background="@drawable/picker_bg"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="52dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="#FF212121"
+                android:textSize="18sp" />
 
             <TextView
                 style="@style/SectionTitle"
                 android:layout_marginTop="10dp"
                 android:text="@string/settings_tap_2" />
 
-            <Spinner
+            <Button
                 android:id="@+id/spTaps2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:focusable="true" />
+                android:background="@drawable/picker_bg"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="52dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="#FF212121"
+                android:textSize="18sp" />
 
             <TextView
                 style="@style/SectionTitle"
                 android:layout_marginTop="10dp"
                 android:text="@string/settings_tap_3" />
 
-            <Spinner
+            <Button
                 android:id="@+id/spTaps3"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:focusable="true" />
+                android:background="@drawable/picker_bg"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="52dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="#FF212121"
+                android:textSize="18sp" />
 
             <TextView
                 style="@style/SectionTitle"
                 android:layout_marginTop="10dp"
                 android:text="@string/settings_tap_4" />
 
-            <Spinner
+            <Button
                 android:id="@+id/spTaps4"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:focusable="true" />
+                android:background="@drawable/picker_bg"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="52dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="#FF212121"
+                android:textSize="18sp" />
 
             <Button
                 android:id="@+id/btnResetRules"
