@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">הקשה באוזניה/שליטת שיחה באוזניה</string>
-    <string name="notification_title">שליטת שיחה באוזניה פעיל</string>
+    <string name="app_name">הקשה באוזניה</string>
+    <string name="notification_title">הקשה באוזניה פעיל</string>
     <string name="notification_text">ממתין לשיחה</string>
     <string name="accessibility_description">לוחץ על מקש בלוח המקשים של מסך השיחה לפי ההגדרה, כשמבצעים הקשה באוזנייה. לא קורא ולא שומר שום תוכן.</string>
 
