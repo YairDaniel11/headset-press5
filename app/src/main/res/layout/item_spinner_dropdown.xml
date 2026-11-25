@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- שורות הרשימה הפתוחה: צבעים קבועים, כי רקע החלון הצף לא תמיד תואם את ערכת הנושא (ב-4.4 יצא לבן על לבן) -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FF1F2933"
+    android:gravity="center_vertical"
+    android:minHeight="48dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:singleLine="true"
+    android:textColor="#FFFFFFFF"
+    android:textSize="17sp" />

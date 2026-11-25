@@ -29,9 +29,11 @@ public class SettingsActivity extends Activity {
             final int taps = i + 1;
             Spinner sp = (Spinner) findViewById(spinnerIds[i]);
             ArrayAdapter<String> ad = new ArrayAdapter<String>(this,
-                    android.R.layout.simple_spinner_item, labels);
-            ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    R.layout.item_spinner, labels);
+            ad.setDropDownViewResource(R.layout.item_spinner_dropdown);
             sp.setAdapter(ad);
+            // רקע קבוע לחלון הרשימה (ללא זה ב-4.4 הוא לבן והטקסט לא נראה).
+            sp.setPopupBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0xFF1F2933));
             sp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
